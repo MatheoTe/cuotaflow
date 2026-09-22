@@ -28,6 +28,15 @@ export const NEGOCIO = {
   },
 } as const
 
+/**
+ * Vendedores conocidos por teléfono. Un número que no esté acá también puede
+ * mandar una consulta: el agente lo reconoce por el contenido y lo marca como vendedor.
+ */
+export const VENDEDORES: Array<{ phone: string; nombre: string; sucursal: string }> = [
+  { phone: '5493885000001', nombre: 'Ramiro Quispe', sucursal: 'La Quiaca' },
+  { phone: '5491155550002', nombre: 'Vendedor de prueba', sucursal: 'Sucursal demo' },
+]
+
 export const ETAPAS = ['nuevo', 'verificacion', 'cobranza', 'seguimiento', 'rechazado'] as const
 export type Etapa = (typeof ETAPAS)[number]
 

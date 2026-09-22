@@ -2,46 +2,69 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { Paperclip, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChatThread } from '@/components/chat-thread'
-import type { Contact, Message } from '@/lib/types'
+import { VENDEDORES } from '@/lib/negocio'
+import type { Consulta, Contact, Message } from '@/lib/types'
+
+const CLIENTE_DEMO = '5491155550001'
+const VENDEDOR_DEMO = VENDEDORES[1]
 
 /**
  * Teléfono de mentira: manda al mismo camino que el webhook de WhatsApp,
  * sin pasar por Meta. Sirve para mostrar el agente en una llamada sin número.
  */
 export default function Simulador() {
-  const [phone, setPhone] = useState('5491155550001')
+  const [phone, setPhone] = useState(CLIENTE_DEMO)
   const [name, setName] = useState('')
   const [text, setText] = useState('')
+  const [foto, setFoto] = useState<{ mime: string; data: string; preview: string } | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [contact, setContact] = useState<Contact | null>(null)
+  const [consulta, setConsulta] = useState<Consulta | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const bottom = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const cargar = useCallback(async (p: string) => {
     const r = await fetch(`/api/chat?phone=${encodeURIComponent(p)}`)
     const j = await r.json()
     setMessages(j.messages ?? [])
     setContact(j.contact ?? null)
+    setConsulta(j.consulta ?? null)
   }, [])
 
   useEffect(() => { cargar(phone) }, [phone, cargar])
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
+  function elegirFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const url = String(reader.result)
+      setFoto({ mime: f.type, data: url.split(',')[1], preview: url })
+    }
+    reader.readAsDataURL(f)
+    e.target.value = ''
+  }
+
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
     const t = text.trim()
-    if (!t || loading) return
+    if ((!t && !foto) || loading) return
     setText('')
     setError(null)
     setLoading(true)
-    const optimista: Message = { id: `tmp-${Date.now()}`, contact_id: '', direction: 'in', kind: 'text', body: t, wa_id: null, created_at: new Date().toISOString() }
+    const optimista: Message = { id: `tmp-${Date.now()}`, contact_id: '', direction: 'in', kind: foto ? 'imagen' : 'text', body: t || (foto ? '[foto]' : ''), wa_id: null, media_id: null, created_at: new Date().toISOString() }
     setMessages(m => [...m, optimista])
+    const imagen = foto ? { mime: foto.mime, data: foto.data } : undefined
+    setFoto(null)
     try {
-      const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, text: t, name: name || undefined }) })
+      const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, text: t, name: name || undefined, imagen }) })
       const j = await r.json()
       if (!r.ok) setError(j.error ?? 'Error')
       await cargar(phone)
@@ -52,26 +75,47 @@ export default function Simulador() {
     }
   }
 
+  const esVendedor = contact?.tipo === 'vendedor' || phone === VENDEDOR_DEMO.phone
+
   return (
     <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[400px_1fr]">
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-display text-headline-sm font-semibold">Simulador</h1>
-          <p className="text-body-sm text-on-surface-variant">Escribí como si fueras un cliente. Cada mensaje entra por el mismo camino que WhatsApp y actualiza el tablero.</p>
+          <p className="text-body-sm text-on-surface-variant">Escribí como si fueras un cliente o un vendedor. Cada mensaje entra por el mismo camino que WhatsApp y actualiza el tablero.</p>
         </div>
         <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-          <label className="mb-1 block text-label-sm uppercase tracking-wide text-on-surface-variant">Número del cliente</label>
+          <div className="mb-3 flex gap-2">
+            <Button size="sm" variant={phone === CLIENTE_DEMO ? 'default' : 'outline'} onClick={() => { setPhone(CLIENTE_DEMO); setName('') }}>Soy cliente</Button>
+            <Button size="sm" variant={phone === VENDEDOR_DEMO.phone ? 'default' : 'outline'} onClick={() => { setPhone(VENDEDOR_DEMO.phone); setName(VENDEDOR_DEMO.nombre) }}>Soy vendedor</Button>
+          </div>
+          <label className="mb-1 block text-label-sm uppercase tracking-wide text-on-surface-variant">Número</label>
           <Input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} inputMode="numeric" />
           <label className="mb-1 mt-3 block text-label-sm uppercase tracking-wide text-on-surface-variant">Nombre de perfil (opcional)</label>
           <Input value={name} onChange={e => setName(e.target.value)} placeholder="Como aparece en WhatsApp" />
-          <p className="mt-3 text-label-md text-on-surface-variant">Cambiá el número para empezar otra conversación.</p>
+          <p className="mt-3 text-label-md text-on-surface-variant">
+            {esVendedor
+              ? 'Como vendedor: mandá nombre, DNI y banco del cliente, o la foto del DNI con el clip. El sistema califica y te contesta.'
+              : 'Cambiá el número para empezar otra conversación.'}
+          </p>
         </div>
         {contact && (
           <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-4 text-body-sm">
             <div className="mb-1 text-label-sm uppercase tracking-wide text-on-surface-variant">Lo que ve el operador</div>
-            <div>Etapa: <b>{contact.stage}</b> · Score: <b>{contact.score}</b></div>
-            {contact.resumen && <p className="mt-1 text-on-surface-variant">{contact.resumen}</p>}
-            <Link href={`/contactos/${contact.id}`} className="mt-2 inline-block text-primary underline-offset-4 hover:underline">Abrir ficha</Link>
+            {consulta ? (
+              <>
+                <div>Consulta: <b>{consulta.nombre_cliente ?? 'sin nombre'}</b>{consulta.dni ? ` · DNI ${consulta.dni}` : ''}</div>
+                <div>Etapa: <b>{consulta.stage}</b> · Score: <b>{consulta.completa ? consulta.score : 'pendiente'}</b></div>
+                {consulta.resumen && <p className="mt-1 text-on-surface-variant">{consulta.resumen}</p>}
+                <Link href={`/consultas/${consulta.id}`} className="mt-2 inline-block text-primary underline-offset-4 hover:underline">Abrir consulta</Link>
+              </>
+            ) : (
+              <>
+                <div>Etapa: <b>{contact.stage}</b> · Score: <b>{contact.score}</b></div>
+                {contact.resumen && <p className="mt-1 text-on-surface-variant">{contact.resumen}</p>}
+                <Link href={`/contactos/${contact.id}`} className="mt-2 inline-block text-primary underline-offset-4 hover:underline">Abrir ficha</Link>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -84,9 +128,19 @@ export default function Simulador() {
           <div ref={bottom} />
         </div>
         {error && <div className="bg-error-container px-4 py-2 text-label-md text-on-error-container">{error}</div>}
+        {foto && (
+          <div className="flex items-center gap-3 border-t border-outline-variant bg-surface-container px-3 py-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={foto.preview} alt="Adjunto" className="h-14 rounded-md" />
+            <span className="text-label-md text-on-surface-variant">Foto lista para enviar</span>
+            <button type="button" onClick={() => setFoto(null)} className="ml-auto text-on-surface-variant hover:text-on-surface" aria-label="Quitar foto"><X className="h-4 w-4" /></button>
+          </div>
+        )}
         <form onSubmit={enviar} className="flex gap-2 border-t border-outline-variant bg-surface-container p-3">
-          <Input value={text} onChange={e => setText(e.target.value)} placeholder="Escribí un mensaje" autoFocus />
-          <Button type="submit" disabled={loading || !text.trim()}>Enviar</Button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={elegirFoto} />
+          <Button type="button" variant="ghost" size="icon" onClick={() => fileRef.current?.click()} aria-label="Adjuntar foto"><Paperclip className="h-4 w-4" /></Button>
+          <Input value={text} onChange={e => setText(e.target.value)} placeholder={foto ? 'Texto opcional para la foto' : 'Escribí un mensaje'} autoFocus />
+          <Button type="submit" disabled={loading || (!text.trim() && !foto)}>Enviar</Button>
         </form>
       </div>
     </div>

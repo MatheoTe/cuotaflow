@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { after } from 'next/server'
 import { db } from '@/lib/db'
 import { procesarEntrante } from '@/lib/pipeline'
-import { enviarTexto, extraerEntrantes, marcarLeido, type WebhookPayload } from '@/lib/whatsapp'
+import { descargarMedia, enviarTexto, extraerEntrantes, marcarLeido, type WebhookPayload } from '@/lib/whatsapp'
 
 export const runtime = 'nodejs'
 
@@ -34,7 +34,9 @@ export async function POST(req: Request) {
       try {
         if (await db().hasWaMessage(e.waId)) continue // Meta reintenta: no procesar dos veces
         await marcarLeido(e.waId)
-        const { contact, reply } = await procesarEntrante({ phone: e.from, text: e.text, name: e.name, waId: e.waId })
+        const imagen = e.mediaId ? await descargarMedia(e.mediaId) : null
+        if (e.mediaId && !imagen) console.error('[webhook] no se pudo bajar la foto', e.mediaId)
+        const { contact, reply } = await procesarEntrante({ phone: e.from, text: e.text, name: e.name, waId: e.waId, imagen })
         const sent = await enviarTexto(contact.phone, reply.body)
         if (!sent.ok) console.error('[webhook] no se pudo responder a', contact.phone, sent.error)
       } catch (err) {

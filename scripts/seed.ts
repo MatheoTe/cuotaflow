@@ -7,6 +7,8 @@ import { db } from '../src/lib/db'
 import { calcularScore } from '../src/lib/scoring'
 import type { Datos } from '../src/lib/types'
 import type { Etapa } from '../src/lib/negocio'
+import { VENDEDORES } from '../src/lib/negocio'
+import { calcularScoreConsulta, consultarBureau, etapaPorScore } from '../src/lib/scoring'
 
 interface Semilla {
   phone: string; name: string; stage: Etapa; datos: Datos; resumen: string; proximo_paso: string
@@ -47,10 +49,42 @@ const SEMILLAS: Semilla[] = [
   },
 ]
 
+/** Vendedor de La Quiaca con dos consultas ya procesadas. */
+async function sembrarVendedor(store: ReturnType<typeof db>) {
+  const v = VENDEDORES[0]
+  if (await store.getContactByPhone(v.phone)) { console.log('ya existe', v.nombre); return }
+  const c = await store.createContact(v.phone, v.nombre, 'vendedor', v.sucursal)
+  await store.updateContact(c.id, { stage: 'seguimiento', resumen: 'Vendedor de La Quiaca. Manda consultas de clientes por acá en vez de por mail.', proximo_paso: 'Nada pendiente' })
+
+  const consultas: Array<{ nombre: string; dni: string; banco: string; monto: number | null; hilo: Array<['in' | 'out', string]> }> = [
+    { nombre: 'Mamani, Rosa', dni: '11222333', banco: 'Banco Nación', monto: 400000, hilo: [
+      ['in', 'Hola Sofi, te paso una consulta: Mamani Rosa, DNI 11222333, cobra en Banco Nación, quiere 400 mil'],
+      ['out', 'Listo, Ramiro. Rosa Mamani está en situación 1, sin deudas informadas, y cobra por Banco Nación: queda pre-aprobada hasta $1.500.000, así que los 400 mil entran cómodos. Pasame el teléfono de Rosa para la verificación.'],
+      ['in', '3885 44 1122'],
+      ['out', 'Anotado. La llaman en el día desde Créditos Río.'],
+    ] },
+    { nombre: 'Choque, Daniel', dni: '30111222', banco: 'Banco Macro', monto: 900000, hilo: [
+      ['in', 'Otra: Choque Daniel, DNI 30111222, Macro, pide 900'],
+      ['out', 'Ramiro, Daniel Choque figura en situación 3 con una deuda informada de $178.000. Con eso no lo puedo pre-aprobar por 900 mil. Si quiere, lo revisa un analista y ve si entra un monto menor; decime y lo dejo marcado.'],
+    ] },
+  ]
+  for (const q of consultas) {
+    for (const [direction, body] of q.hilo) await store.addMessage({ contact_id: c.id, direction, body })
+    const k = await store.createConsulta(c.id)
+    const base = { nombre_cliente: q.nombre, dni: q.dni, banco: q.banco, monto: q.monto, bureau: consultarBureau(q.dni) }
+    const { score } = calcularScoreConsulta(base)
+    await store.updateConsulta(k.id, { ...base, completa: true, score, stage: etapaPorScore(score), telefono_cliente: q.nombre.startsWith('Mamani') ? '5493885441122' : null,
+      resumen: q.nombre.startsWith('Mamani') ? 'Rosa Mamani, Banco Nación, situación 1. Pre-aprobada por 400 mil, teléfono tomado.' : 'Daniel Choque, Macro, situación 3 con deuda. No pre-aprobado por 900 mil; pendiente si el vendedor pide revisión.',
+      proximo_paso: q.nombre.startsWith('Mamani') ? 'Llamar a Rosa para la verificación' : 'Esperar al vendedor' })
+  }
+  console.log('creado', v.nombre, 'con', consultas.length, 'consultas')
+}
+
 async function main() {
   const reset = process.argv.includes('--reset')
   const store = db()
   if (reset) await store.reset()
+  await sembrarVendedor(store)
   for (const s of SEMILLAS) {
     if (await store.getContactByPhone(s.phone)) { console.log('ya existe', s.name); continue }
     const c = await store.createContact(s.phone, s.name)

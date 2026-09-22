@@ -48,7 +48,7 @@ export default async function Contacto({ params }: { params: Promise<{ id: strin
           <Link href="/tablero" className="text-on-surface-variant hover:text-on-surface"><ArrowLeft className="h-4 w-4" /></Link>
           <div className="min-w-0 flex-1">
             <div className="truncate font-medium">{c.name ?? `+${c.phone}`}</div>
-            <div className="text-label-md text-on-surface-variant">{ETAPA_LABEL[c.stage]}{c.proximo_paso ? ` · ${c.proximo_paso}` : ''}</div>
+            <div className="text-label-md text-on-surface-variant">{c.tipo === 'vendedor' ? `Vendedor${c.sucursal ? ` · ${c.sucursal}` : ''}` : ETAPA_LABEL[c.stage]}{c.proximo_paso ? ` · ${c.proximo_paso}` : ''}</div>
           </div>
           <Badge variant={et.variant}>{score > 0 ? `${score} · ${et.label}` : et.label}</Badge>
         </header>

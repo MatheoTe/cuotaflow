@@ -8,13 +8,17 @@ export function ChatThread({ messages, className }: { messages: Message[]; class
     <div className={cn('flex flex-col gap-2', className)}>
       {messages.map(m => {
         if (m.kind === 'sistema') {
-          return <div key={m.id} className="my-1 self-center rounded-full bg-surface-container-high px-3 py-1 text-label-sm text-on-surface-variant">{m.body}</div>
+          return <div key={m.id} className="my-1 self-center rounded-full bg-surface-container-high px-3 py-1 text-center text-label-sm text-on-surface-variant">{m.body}</div>
         }
         const out = m.direction === 'out'
         return (
           <div key={m.id} className={cn('max-w-[80%] px-3 py-2 text-body-sm', out ? 'bubble-out self-end' : 'bubble-in self-start')}>
-            {m.kind !== 'text' && <div className="mb-0.5 text-label-sm uppercase tracking-wide opacity-70">{m.kind}</div>}
-            <div className="whitespace-pre-wrap">{m.body}</div>
+            {m.kind !== 'text' && m.kind !== 'imagen' && <div className="mb-0.5 text-label-sm uppercase tracking-wide opacity-70">{m.kind}</div>}
+            {m.media_id && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/api/media/${m.media_id}`} alt="Foto recibida" className="mb-1 max-h-64 rounded-lg" />
+            )}
+            {m.body && m.body !== '[foto]' && <div className="whitespace-pre-wrap">{m.body}</div>}
             <div className="mt-1 text-right text-label-sm opacity-60">{hora(m.created_at)}</div>
           </div>
         )

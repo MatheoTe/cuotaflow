@@ -3,12 +3,15 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { z } from 'zod'
 import { SYSTEM_PROMPT, estadoContacto } from './prompt'
 import { ETAPAS } from '../negocio'
-import type { Contact, Message, Datos } from '../types'
+import type { Contact, Message, Datos, Consulta, Media } from '../types'
 
 const MODEL = process.env.CLAUDE_MODEL ?? 'claude-opus-5'
+/** Cuántas fotos recientes se le muestran al modelo. */
+const MAX_FOTOS = 4
 
 const Salida = z.object({
   reply: z.string().describe('Texto exacto que se manda por WhatsApp. Corto, una pregunta como máximo.'),
+  rol: z.enum(['cliente', 'vendedor']),
   datos: z.object({
     nombre: z.string().nullable(),
     monto_solicitado: z.number().nullable().describe('En pesos, número entero'),
@@ -19,7 +22,15 @@ const Salida = z.object({
     provincia: z.string().nullable(),
     turno_verificacion: z.string().nullable().describe('Día y franja acordados para la llamada, en texto'),
     es_cliente_con_cuota: z.boolean().nullable(),
-  }),
+  }).describe('Datos del cliente final. Si el rol es vendedor, dejá todo en null.'),
+  consulta: z.object({
+    nombre_cliente: z.string().nullable().describe('Apellido y nombre del cliente por el que consulta el vendedor'),
+    dni: z.string().nullable().describe('Solo dígitos'),
+    banco: z.string().nullable().describe('Banco donde cobra el cliente'),
+    monto: z.number().nullable(),
+    telefono_cliente: z.string().nullable().describe('Solo dígitos, con código de país si se puede'),
+    consulta_nueva: z.boolean().describe('true si estos datos son de otra persona distinta a la consulta en curso'),
+  }).nullable().describe('Solo si el rol es vendedor; null si es cliente.'),
   stage: z.enum(ETAPAS),
   resumen: z.string().describe('Una oración para el operador: quién es, qué pide, en qué quedó'),
   proximo_paso: z.string().describe('Acción concreta siguiente, para el operador'),
@@ -30,31 +41,56 @@ export type SalidaAgente = z.infer<typeof Salida>
 let client: Anthropic | null = null
 const anthropic = () => (client ??= new Anthropic())
 
+type MediaMime = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+const esImagen = (mime: string): mime is MediaMime => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mime)
+
+export interface ContextoAgente {
+  contact: Contact
+  history: Message[]
+  consulta: Consulta | null
+  /** Media referenciada por los mensajes, por id. */
+  media: Map<string, Media>
+  /** Nota final del sistema (por ejemplo, resultado de la calificación recién corrida). */
+  nota?: string
+}
+
 /**
  * Genera la respuesta del agente para el último mensaje entrante.
  * `history` es el hilo completo, ordenado, incluido el mensaje nuevo.
  */
-export async function responder(contact: Contact, history: Message[]): Promise<SalidaAgente> {
+export async function responder(ctx: ContextoAgente): Promise<SalidaAgente> {
+  const { contact, history, consulta, media } = ctx
   const messages: Anthropic.MessageParam[] = []
+  // Solo las últimas fotos viajan como imagen; las anteriores quedan como texto.
+  const idsFotos = history.filter(m => m.media_id && media.get(m.media_id) && esImagen(media.get(m.media_id)!.mime)).map(m => m.media_id!)
+  const fotosVisibles = new Set(idsFotos.slice(-MAX_FOTOS))
+
   for (const m of history) {
     if (m.kind === 'sistema') continue
     const role = m.direction === 'in' ? 'user' : 'assistant'
+    const bloques: Anthropic.ContentBlockParam[] = []
+    if (m.media_id && fotosVisibles.has(m.media_id)) {
+      const md = media.get(m.media_id)!
+      bloques.push({ type: 'image', source: { type: 'base64', media_type: md.mime as MediaMime, data: md.data } })
+    }
+    bloques.push({ type: 'text', text: m.body })
     const last = messages[messages.length - 1]
-    if (last && last.role === role && typeof last.content === 'string') {
-      last.content = `${last.content}\n${m.body}`
+    if (last && last.role === role && Array.isArray(last.content)) {
+      last.content.push(...bloques)
     } else {
-      messages.push({ role, content: m.body })
+      messages.push({ role, content: bloques })
     }
   }
   if (messages.length === 0 || messages[0].role !== 'user') {
-    messages.unshift({ role: 'user', content: '(inicio de conversación)' })
+    messages.unshift({ role: 'user', content: [{ type: 'text', text: '(inicio de conversación)' }] })
   }
   // El estado volátil va al final, en el turno del usuario, así el prefijo se cachea.
+  const estado = [estadoContacto(contact, consulta, new Date()), ctx.nota].filter(Boolean).join('\n\n')
   const last = messages[messages.length - 1]
-  if (last.role === 'user' && typeof last.content === 'string') {
-    last.content = `${last.content}\n\n${estadoContacto(contact, new Date())}`
+  if (last.role === 'user' && Array.isArray(last.content)) {
+    last.content.push({ type: 'text', text: estado })
   } else {
-    messages.push({ role: 'user', content: estadoContacto(contact, new Date()) })
+    messages.push({ role: 'user', content: [{ type: 'text', text: estado }] })
   }
 
   const response = await anthropic().messages.parse({
@@ -68,7 +104,9 @@ export async function responder(contact: Contact, history: Message[]): Promise<S
   if (response.stop_reason === 'refusal' || !response.parsed_output) {
     return {
       reply: 'Perdón, no pude procesar ese mensaje. ¿Me lo repetís con otras palabras?',
+      rol: contact.tipo,
       datos: normalizar(contact.datos),
+      consulta: null,
       stage: contact.stage,
       resumen: contact.resumen ?? 'Sin resumen',
       proximo_paso: contact.proximo_paso ?? 'Revisar conversación',
@@ -77,6 +115,10 @@ export async function responder(contact: Contact, history: Message[]): Promise<S
   const out = response.parsed_output
   // Los datos nuevos nunca borran los viejos: null en la salida = "no cambió".
   out.datos = { ...normalizar(contact.datos), ...sinNulos(out.datos) } as SalidaAgente['datos']
+  if (out.consulta) {
+    out.consulta.dni = out.consulta.dni?.replace(/\D/g, '') || null
+    out.consulta.telefono_cliente = out.consulta.telefono_cliente?.replace(/\D/g, '') || null
+  }
   return out
 }
 

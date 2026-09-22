@@ -23,10 +23,14 @@ export interface Datos {
   es_cliente_con_cuota?: boolean | null
 }
 
+export type TipoContacto = 'cliente' | 'vendedor'
+
 export interface Contact {
   id: string
   phone: string
   name: string | null
+  tipo: TipoContacto
+  sucursal: string | null
   stage: Etapa
   score: number
   datos: Datos
@@ -40,7 +44,7 @@ export interface Contact {
 }
 
 export type Direction = 'in' | 'out'
-export type MessageKind = 'text' | 'recordatorio' | 'agradecimiento' | 'sistema'
+export type MessageKind = 'text' | 'imagen' | 'recordatorio' | 'agradecimiento' | 'sistema'
 
 export interface Message {
   id: string
@@ -49,5 +53,43 @@ export interface Message {
   kind: MessageKind
   body: string
   wa_id: string | null
+  media_id: string | null
   created_at: string
+}
+
+/** Foto o documento recibido por WhatsApp (o subido en el simulador). */
+export interface Media {
+  id: string
+  contact_id: string
+  mime: string
+  /** base64 sin prefijo */
+  data: string
+  created_at: string
+}
+
+/** Resultado simulado de la consulta crediticia por DNI. */
+export interface Bureau {
+  situacion: 1 | 2 | 3 | 4 | 5
+  deuda_total: number
+  detalle: string
+}
+
+/** Consulta que un vendedor manda en nombre de un cliente. */
+export interface Consulta {
+  id: string
+  vendedor_id: string
+  nombre_cliente: string | null
+  dni: string | null
+  banco: string | null
+  monto: number | null
+  telefono_cliente: string | null
+  completa: boolean
+  bureau: Bureau | null
+  score: number
+  stage: Etapa
+  resumen: string | null
+  proximo_paso: string | null
+  fotos: string[]
+  created_at: string
+  updated_at: string
 }

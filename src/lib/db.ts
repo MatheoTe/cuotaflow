@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
-import type { Contact, Message, Datos, Direction, MessageKind } from './types'
+import type { Contact, Message, Datos, Direction, MessageKind, Media, Consulta, TipoContacto } from './types'
 import type { Etapa } from './negocio'
 
 /**
@@ -11,24 +11,36 @@ import type { Etapa } from './negocio'
  *  - Un JSON en data/store.json cuando no (desarrollo local sin configurar nada).
  * Ambas exponen la misma interfaz.
  */
+export interface NuevoMensaje { contact_id: string; direction: Direction; kind?: MessageKind; body: string; wa_id?: string | null; media_id?: string | null }
+
 export interface Store {
   listContacts(): Promise<Contact[]>
   getContact(id: string): Promise<Contact | null>
   getContactByPhone(phone: string): Promise<Contact | null>
-  createContact(phone: string, name?: string | null): Promise<Contact>
+  createContact(phone: string, name?: string | null, tipo?: TipoContacto, sucursal?: string | null): Promise<Contact>
   updateContact(id: string, patch: Partial<Omit<Contact, 'id' | 'phone' | 'created_at'>>): Promise<Contact>
   listMessages(contactId: string): Promise<Message[]>
-  addMessage(input: { contact_id: string; direction: Direction; kind?: MessageKind; body: string; wa_id?: string | null }): Promise<Message>
+  addMessage(input: NuevoMensaje): Promise<Message>
   hasWaMessage(waId: string): Promise<boolean>
+  addMedia(input: { contact_id: string; mime: string; data: string }): Promise<Media>
+  getMedia(id: string): Promise<Media | null>
+  listConsultas(): Promise<Consulta[]>
+  getConsulta(id: string): Promise<Consulta | null>
+  /** Última consulta del vendedor (completa o no): es sobre la que siguen llegando datos. */
+  getConsultaActiva(vendedorId: string): Promise<Consulta | null>
+  createConsulta(vendedorId: string): Promise<Consulta>
+  updateConsulta(id: string, patch: Partial<Omit<Consulta, 'id' | 'vendedor_id' | 'created_at'>>): Promise<Consulta>
   reset(): Promise<void>
 }
 
 const now = () => new Date().toISOString()
 
-const emptyContact = (phone: string, name?: string | null): Contact => ({
+const emptyContact = (phone: string, name?: string | null, tipo: TipoContacto = 'cliente', sucursal: string | null = null): Contact => ({
   id: randomUUID(),
   phone,
   name: name ?? null,
+  tipo,
+  sucursal,
   stage: 'nuevo',
   score: 0,
   datos: {},
@@ -41,9 +53,29 @@ const emptyContact = (phone: string, name?: string | null): Contact => ({
   last_message_at: null,
 })
 
+const emptyConsulta = (vendedorId: string): Consulta => ({
+  id: randomUUID(),
+  vendedor_id: vendedorId,
+  nombre_cliente: null,
+  dni: null,
+  banco: null,
+  monto: null,
+  telefono_cliente: null,
+  completa: false,
+  bureau: null,
+  score: 0,
+  stage: 'nuevo',
+  resumen: null,
+  proximo_paso: null,
+  fotos: [],
+  created_at: now(),
+  updated_at: now(),
+})
+
 /* ───────────────────────── JSON local ───────────────────────── */
 
-interface FileData { contacts: Contact[]; messages: Message[] }
+interface FileData { contacts: Contact[]; messages: Message[]; media: Media[]; consultas: Consulta[] }
+const vacio = (): FileData => ({ contacts: [], messages: [], media: [], consultas: [] })
 
 class FileStore implements Store {
   // En Vercel el filesystem del proyecto es de solo lectura: se usa /tmp (efímero). Para la demo real va Supabase.
@@ -53,9 +85,9 @@ class FileStore implements Store {
   /** Se relee siempre: el seed y el servidor son procesos distintos sobre el mismo archivo. */
   private async load(): Promise<FileData> {
     try {
-      this.cache = JSON.parse(await fs.readFile(this.file, 'utf8')) as FileData
+      this.cache = { ...vacio(), ...(JSON.parse(await fs.readFile(this.file, 'utf8')) as Partial<FileData>) }
     } catch {
-      this.cache = { contacts: [], messages: [] }
+      this.cache = vacio()
     }
     return this.cache
   }
@@ -70,9 +102,9 @@ class FileStore implements Store {
   }
   async getContact(id: string) { return (await this.load()).contacts.find(c => c.id === id) ?? null }
   async getContactByPhone(phone: string) { return (await this.load()).contacts.find(c => c.phone === phone) ?? null }
-  async createContact(phone: string, name?: string | null) {
+  async createContact(phone: string, name?: string | null, tipo?: TipoContacto, sucursal?: string | null) {
     const d = await this.load()
-    const c = emptyContact(phone, name)
+    const c = emptyContact(phone, name, tipo, sucursal)
     d.contacts.push(c)
     await this.save()
     return c
@@ -88,9 +120,9 @@ class FileStore implements Store {
   async listMessages(contactId: string) {
     return (await this.load()).messages.filter(m => m.contact_id === contactId).sort((a, b) => a.created_at.localeCompare(b.created_at))
   }
-  async addMessage(input: { contact_id: string; direction: Direction; kind?: MessageKind; body: string; wa_id?: string | null }) {
+  async addMessage(input: NuevoMensaje) {
     const d = await this.load()
-    const m: Message = { id: randomUUID(), kind: 'text', wa_id: null, created_at: now(), ...input }
+    const m: Message = { id: randomUUID(), kind: 'text', wa_id: null, media_id: null, created_at: now(), ...input }
     d.messages.push(m)
     const i = d.contacts.findIndex(c => c.id === input.contact_id)
     if (i >= 0) d.contacts[i] = { ...d.contacts[i], last_message_at: m.created_at }
@@ -98,7 +130,38 @@ class FileStore implements Store {
     return m
   }
   async hasWaMessage(waId: string) { return (await this.load()).messages.some(m => m.wa_id === waId) }
-  async reset() { this.cache = { contacts: [], messages: [] }; await this.save() }
+  async addMedia(input: { contact_id: string; mime: string; data: string }) {
+    const d = await this.load()
+    const m: Media = { id: randomUUID(), created_at: now(), ...input }
+    d.media.push(m)
+    await this.save()
+    return m
+  }
+  async getMedia(id: string) { return (await this.load()).media.find(m => m.id === id) ?? null }
+  async listConsultas() {
+    return [...(await this.load()).consultas].sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+  }
+  async getConsulta(id: string) { return (await this.load()).consultas.find(c => c.id === id) ?? null }
+  async getConsultaActiva(vendedorId: string) {
+    const propias = (await this.load()).consultas.filter(c => c.vendedor_id === vendedorId)
+    return propias.sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null
+  }
+  async createConsulta(vendedorId: string) {
+    const d = await this.load()
+    const c = emptyConsulta(vendedorId)
+    d.consultas.push(c)
+    await this.save()
+    return c
+  }
+  async updateConsulta(id: string, patch: Partial<Consulta>) {
+    const d = await this.load()
+    const i = d.consultas.findIndex(c => c.id === id)
+    if (i < 0) throw new Error(`consulta ${id} no existe`)
+    d.consultas[i] = { ...d.consultas[i], ...patch, updated_at: now() }
+    await this.save()
+    return d.consultas[i]
+  }
+  async reset() { this.cache = vacio(); await this.save() }
 }
 
 /* ───────────────────────── Supabase ───────────────────────── */
@@ -119,8 +182,8 @@ class SupabaseStore implements Store {
     const { data } = await this.sb.from('contacts').select('*').eq('phone', phone).maybeSingle()
     return (data as Contact | null) ?? null
   }
-  async createContact(phone: string, name?: string | null) {
-    const { data, error } = await this.sb.from('contacts').insert({ phone, name: name ?? null, datos: {} }).select('*').single()
+  async createContact(phone: string, name?: string | null, tipo: TipoContacto = 'cliente', sucursal: string | null = null) {
+    const { data, error } = await this.sb.from('contacts').insert({ phone, name: name ?? null, tipo, sucursal, datos: {} }).select('*').single()
     if (error) throw error
     return data as Contact
   }
@@ -134,8 +197,8 @@ class SupabaseStore implements Store {
     if (error) throw error
     return (data ?? []) as Message[]
   }
-  async addMessage(input: { contact_id: string; direction: Direction; kind?: MessageKind; body: string; wa_id?: string | null }) {
-    const { data, error } = await this.sb.from('messages').insert({ kind: 'text', wa_id: null, ...input }).select('*').single()
+  async addMessage(input: NuevoMensaje) {
+    const { data, error } = await this.sb.from('messages').insert({ kind: 'text', wa_id: null, media_id: null, ...input }).select('*').single()
     if (error) throw error
     await this.sb.from('contacts').update({ last_message_at: (data as Message).created_at }).eq('id', input.contact_id)
     return data as Message
@@ -144,9 +207,44 @@ class SupabaseStore implements Store {
     const { count } = await this.sb.from('messages').select('id', { count: 'exact', head: true }).eq('wa_id', waId)
     return (count ?? 0) > 0
   }
+  async addMedia(input: { contact_id: string; mime: string; data: string }) {
+    const { data, error } = await this.sb.from('media').insert(input).select('*').single()
+    if (error) throw error
+    return data as Media
+  }
+  async getMedia(id: string) {
+    const { data } = await this.sb.from('media').select('*').eq('id', id).maybeSingle()
+    return (data as Media | null) ?? null
+  }
+  async listConsultas() {
+    const { data, error } = await this.sb.from('consultas').select('*').order('updated_at', { ascending: false })
+    if (error) throw error
+    return (data ?? []) as Consulta[]
+  }
+  async getConsulta(id: string) {
+    const { data } = await this.sb.from('consultas').select('*').eq('id', id).maybeSingle()
+    return (data as Consulta | null) ?? null
+  }
+  async getConsultaActiva(vendedorId: string) {
+    const { data } = await this.sb.from('consultas').select('*').eq('vendedor_id', vendedorId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    return (data as Consulta | null) ?? null
+  }
+  async createConsulta(vendedorId: string) {
+    const { data, error } = await this.sb.from('consultas').insert({ vendedor_id: vendedorId, fotos: [] }).select('*').single()
+    if (error) throw error
+    return data as Consulta
+  }
+  async updateConsulta(id: string, patch: Partial<Consulta>) {
+    const { data, error } = await this.sb.from('consultas').update({ ...patch, updated_at: now() }).eq('id', id).select('*').single()
+    if (error) throw error
+    return data as Consulta
+  }
   async reset() {
-    await this.sb.from('messages').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await this.sb.from('contacts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    const todo = '00000000-0000-0000-0000-000000000000'
+    await this.sb.from('consultas').delete().neq('id', todo)
+    await this.sb.from('messages').delete().neq('id', todo)
+    await this.sb.from('media').delete().neq('id', todo)
+    await this.sb.from('contacts').delete().neq('id', todo)
   }
 }
 
@@ -168,4 +266,4 @@ export function storeKind(): 'supabase' | 'archivo' {
   return process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY ? 'supabase' : 'archivo'
 }
 
-export type { Contact, Message, Datos, Etapa }
+export type { Contact, Message, Datos, Etapa, Media, Consulta }

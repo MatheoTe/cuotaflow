@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { etiquetaScore, formatoARS } from '@/lib/scoring'
-import type { Contact } from '@/lib/types'
+import type { Contact, Consulta } from '@/lib/types'
 
 export function hace(iso: string | null): string {
   if (!iso) return ''
@@ -29,6 +29,27 @@ export function ContactCard({ c }: { c: Contact }) {
       ) : null}
       {c.resumen && <p className="mt-2 line-clamp-2 text-label-md text-on-surface-variant">{c.resumen}</p>}
       <div className="mt-2 text-label-sm text-on-surface-variant">{hace(c.last_message_at)}</div>
+    </Link>
+  )
+}
+
+/** Tarjeta de una consulta mandada por un vendedor. */
+export function ConsultaCard({ c, vendedor }: { c: Consulta; vendedor: Contact | undefined }) {
+  const et = etiquetaScore(c.score)
+  return (
+    <Link href={`/consultas/${c.id}`} className="block rounded-xl border border-tertiary/40 bg-surface-container p-3 transition-colors hover:border-tertiary">
+      <div className="mb-1 flex items-center gap-1.5 text-label-sm uppercase tracking-wide text-tertiary">
+        Consulta · {vendedor?.name ?? 'vendedor'}{vendedor?.sucursal ? ` · ${vendedor.sucursal}` : ''}
+      </div>
+      <div className="truncate font-medium">{c.nombre_cliente ?? 'Cliente sin nombre'}</div>
+      <div className="text-label-md text-on-surface-variant">{c.dni ? `DNI ${c.dni}` : 'Sin DNI'}{c.banco ? ` · ${c.banco}` : ''}</div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <Badge variant={c.completa ? et.variant : 'outline'} className="whitespace-nowrap">{c.completa ? `${c.score} · ${et.label}` : 'Incompleta'}</Badge>
+        {c.fotos.length > 0 && <Badge variant="secondary" className="whitespace-nowrap">{c.fotos.length} {c.fotos.length === 1 ? 'foto' : 'fotos'}</Badge>}
+      </div>
+      {c.monto ? <div className="mt-2 text-body-sm">{formatoARS(c.monto)}</div> : null}
+      {c.resumen && <p className="mt-2 line-clamp-2 text-label-md text-on-surface-variant">{c.resumen}</p>}
+      <div className="mt-2 text-label-sm text-on-surface-variant">{hace(c.updated_at)}</div>
     </Link>
   )
 }

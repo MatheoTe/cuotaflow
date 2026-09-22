@@ -28,7 +28,7 @@ export default async function Conversaciones() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="truncate font-medium">{c.name ?? `+${c.phone}`}</span>
-                <Badge variant="outline">{ETAPA_LABEL[c.stage]}</Badge>
+                {c.tipo === 'vendedor' ? <Badge variant="secondary">Vendedor{c.sucursal ? ` · ${c.sucursal}` : ''}</Badge> : <Badge variant="outline">{ETAPA_LABEL[c.stage]}</Badge>}
               </div>
               <div className="truncate text-body-sm text-on-surface-variant">
                 {last ? `${last.direction === 'out' ? 'Sofi: ' : ''}${last.body}` : 'Sin mensajes'}
