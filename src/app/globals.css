@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Demo CRM de créditos — paleta propia (grafito + verde).
+ * Tokens en HSL sin la función, como pide tailwind.config.ts.
+ */
+@layer base {
+  :root {
+    --surface:                    220 14%  7%;
+    --surface-dim:                220 14%  6%;
+    --surface-container-lowest:   220 14%  5%;
+    --surface-container-low:      220 13%  9%;
+    --surface-container:          220 12% 11%;
+    --surface-container-high:     220 11% 14%;
+    --surface-container-highest:  220 10% 18%;
+    --surface-bright:             220 10% 22%;
+    --surface-variant:            220 10% 20%;
+    --surface-tint:               152 60% 45%;
+
+    --on-surface:                 210 20% 96%;
+    --on-surface-variant:         215 14% 70%;
+    --on-background:              210 20% 96%;
+    --inverse-surface:            210 20% 96%;
+    --inverse-on-surface:         220 12% 11%;
+
+    --primary:                    152 60% 45%;
+    --primary-fixed:              152 65% 60%;
+    --primary-fixed-dim:          152 60% 45%;
+    --primary-container:          152 55% 30%;
+    --on-primary:                 152 60%  8%;
+    --on-primary-fixed:           152 60%  8%;
+    --on-primary-fixed-variant:   152 50% 18%;
+    --on-primary-container:       152 60% 92%;
+    --inverse-primary:            152 60% 30%;
+
+    --secondary:                  215 14% 70%;
+    --secondary-fixed:            215 20% 82%;
+    --secondary-fixed-dim:        215 14% 70%;
+    --secondary-container:        220 10% 22%;
+    --on-secondary:               220 14% 12%;
+    --on-secondary-fixed:         220 14%  8%;
+    --on-secondary-fixed-variant: 220 10% 22%;
+    --on-secondary-container:     215 14% 80%;
+
+    --tertiary:                   200 80% 65%;
+    --tertiary-fixed:             200 85% 75%;
+    --tertiary-fixed-dim:         200 80% 65%;
+    --tertiary-container:         200 60% 30%;
+    --on-tertiary:                200 80% 10%;
+    --on-tertiary-fixed:          200 80%  8%;
+    --on-tertiary-fixed-variant:  200 50% 20%;
+    --on-tertiary-container:      200 80% 94%;
+
+    --outline:                    220 10% 40%;
+    --outline-variant:            220 10% 20%;
+
+    --error:                        0 80% 72%;
+    --error-container:              0 60% 22%;
+    --on-error:                     0 80% 12%;
+    --on-error-container:           0 80% 92%;
+
+    --success:                    152 60% 50%;
+    --on-success:                 152 60%  8%;
+    --warning:                     38 95% 62%;
+
+    /* shadcn compat */
+    --background:             220 14%  7%;
+    --foreground:             210 20% 96%;
+    --card:                   220 12% 11%;
+    --card-foreground:        210 20% 96%;
+    --popover:                220 11% 14%;
+    --popover-foreground:     210 20% 96%;
+    --muted:                  220 10% 18%;
+    --muted-foreground:       215 14% 70%;
+    --accent:                 220 10% 18%;
+    --accent-foreground:      210 20% 96%;
+    --destructive:              0 60% 45%;
+    --destructive-foreground: 210 20% 96%;
+    --border:                 220 10% 20%;
+    --input:                  220 10% 20%;
+    --ring:                   152 60% 45%;
+    --radius:                 0.75rem;
+  }
+
+  * { @apply border-border; }
+  html, body { height: 100%; }
+  body { @apply bg-background text-foreground antialiased; }
+}
+
+/* Burbujas de chat */
+.bubble-in  { @apply rounded-2xl rounded-tl-sm bg-surface-container-high text-on-surface; }
+.bubble-out { @apply rounded-2xl rounded-tr-sm bg-primary-container text-on-primary-container; }
