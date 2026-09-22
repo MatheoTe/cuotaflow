@@ -46,7 +46,8 @@ const emptyContact = (phone: string, name?: string | null): Contact => ({
 interface FileData { contacts: Contact[]; messages: Message[] }
 
 class FileStore implements Store {
-  private file = path.join(process.cwd(), 'data', 'store.json')
+  // En Vercel el filesystem del proyecto es de solo lectura: se usa /tmp (efímero). Para la demo real va Supabase.
+  private file = process.env.VERCEL ? '/tmp/demo-creditos-store.json' : path.join(process.cwd(), 'data', 'store.json')
   private cache: FileData | null = null
 
   /** Se relee siempre: el seed y el servidor son procesos distintos sobre el mismo archivo. */
