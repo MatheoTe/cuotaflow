@@ -49,8 +49,8 @@ class FileStore implements Store {
   private file = path.join(process.cwd(), 'data', 'store.json')
   private cache: FileData | null = null
 
+  /** Se relee siempre: el seed y el servidor son procesos distintos sobre el mismo archivo. */
   private async load(): Promise<FileData> {
-    if (this.cache) return this.cache
     try {
       this.cache = JSON.parse(await fs.readFile(this.file, 'utf8')) as FileData
     } catch {

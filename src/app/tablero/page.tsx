@@ -19,7 +19,7 @@ export default async function Tablero() {
           <p className="text-body-sm text-on-surface-variant">{contacts.length} contactos · datos: {storeKind()} · WhatsApp: {whatsappConfigurado() ? 'conectado' : 'sin conectar'}</p>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
         {ETAPAS.map(etapa => (
           <section key={etapa} className="min-w-0 rounded-2xl bg-surface-container-low p-3">
             <header className="mb-3 flex items-center justify-between px-1">

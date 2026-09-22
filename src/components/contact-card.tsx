@@ -17,13 +17,11 @@ export function ContactCard({ c }: { c: Contact }) {
   const et = etiquetaScore(c.score)
   return (
     <Link href={`/contactos/${c.id}`} className="block rounded-xl border border-outline-variant bg-surface-container p-3 transition-colors hover:border-primary/60">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate font-medium">{c.name ?? 'Sin nombre'}</div>
-          <div className="text-label-md text-on-surface-variant">+{c.phone}</div>
-        </div>
-        <Badge variant={et.variant}>{c.score > 0 ? `${c.score} · ${et.label}` : et.label}</Badge>
+      <div className="min-w-0">
+        <div className="truncate font-medium">{c.name ?? 'Sin nombre'}</div>
+        <div className="text-label-md text-on-surface-variant">+{c.phone}</div>
       </div>
+      <Badge variant={et.variant} className="mt-2 whitespace-nowrap">{c.score > 0 ? `${c.score} · ${et.label}` : et.label}</Badge>
       {c.datos.monto_solicitado ? (
         <div className="mt-2 text-body-sm">{formatoARS(c.datos.monto_solicitado)}{c.datos.destino ? ` · ${c.datos.destino}` : ''}</div>
       ) : c.cuota ? (
