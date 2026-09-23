@@ -3,8 +3,14 @@
 # variables en Vercel, siembra datos y despliega. Requiere `supabase login` hecho.
 #   scripts/setup-supabase.sh            → crea el proyecto y hace todo
 #   PROJECT_REF=xxxx scripts/setup-supabase.sh  → usa un proyecto existente
+# Si ya corrió una vez, .env.supabase.local guarda PROJECT_REF y DB_PASSWORD y
+# el script retoma desde ahí (link y push son idempotentes).
 set -euo pipefail
 cd "$(dirname "$0")/.."
+unset SUPABASE_ACCESS_TOKEN || true
+if [ -f .env.supabase.local ]; then set -a; . ./.env.supabase.local; set +a; fi
+trap 'echo "✗ falló en el paso: $PASO (línea $LINENO)"' ERR
+PASO="inicio"
 
 NAME="demo-creditos"
 REGION="${REGION:-sa-east-1}"
@@ -28,24 +34,39 @@ else
   DB_PASSWORD="${DB_PASSWORD:?Con PROJECT_REF hay que pasar DB_PASSWORD}"
 fi
 
+PASO="link"
 echo "→ vinculando y aplicando el esquema"
 supabase link --project-ref "$PROJECT_REF" -p "$DB_PASSWORD"
-supabase db push -p "$DB_PASSWORD"
+PASO="db push"
+supabase db push -p "$DB_PASSWORD" --yes
 
+PASO="leer claves"
 echo "→ leyendo claves"
 KEYS=$(supabase projects api-keys --project-ref "$PROJECT_REF" -o json)
-SERVICE_KEY=$(echo "$KEYS" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const k=JSON.parse(s);console.log((k.find(x=>x.name==="service_role")||k.find(x=>/secret|service/i.test(x.name))).api_key)})')
+SERVICE_KEY=$(echo "$KEYS" | node -e '
+let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+  const k=JSON.parse(s);
+  const hit=k.find(x=>x.name==="service_role")||k.find(x=>/secret|service/i.test(x.name||""));
+  if(!hit){console.error("no encontré la service key; nombres:",k.map(x=>x.name).join(", "));process.exit(1)}
+  console.log(hit.api_key||hit.apiKey||hit.key)})')
+[ -n "$SERVICE_KEY" ] || { echo "service key vacía"; exit 1; }
 SUPABASE_URL="https://$PROJECT_REF.supabase.co"
+echo "SUPABASE_URL=$SUPABASE_URL" > .env.supabase.keys.local
+echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> .env.supabase.keys.local
+chmod 600 .env.supabase.keys.local
 
+PASO="vercel env"
 echo "→ cargando variables en Vercel (production)"
 vercel env rm SUPABASE_URL production --yes >/dev/null 2>&1 || true
 vercel env rm SUPABASE_SERVICE_ROLE_KEY production --yes >/dev/null 2>&1 || true
 printf "%s" "$SUPABASE_URL" | vercel env add SUPABASE_URL production --yes
 printf "%s" "$SERVICE_KEY" | vercel env add SUPABASE_SERVICE_ROLE_KEY production --yes
 
+PASO="seed"
 echo "→ sembrando datos en Supabase"
 SUPABASE_URL="$SUPABASE_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" npx tsx scripts/seed.ts --reset
 
+PASO="deploy"
 echo "→ desplegando"
 vercel --prod --yes
 
