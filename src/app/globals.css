@@ -3,92 +3,234 @@
 @tailwind utilities;
 
 /*
- * Demo CRM de créditos — paleta propia (grafito + verde).
- * Tokens en HSL sin la función, como pide tailwind.config.ts.
+ * Demo CRM de créditos — tema "deluxe".
+ * Tierra oscura azul-grafito, luces de la paleta desplazándose en dos capas,
+ * grano y viñeta, paneles de vidrio y tarjetas con elevación real.
+ * Todo CSS puro, sin dependencias. prefers-reduced-motion apaga el movimiento.
  */
 @layer base {
   :root {
-    --surface:                    220 14%  7%;
-    --surface-dim:                220 14%  6%;
-    --surface-container-lowest:   220 14%  5%;
-    --surface-container-low:      220 13%  9%;
-    --surface-container:          220 12% 11%;
-    --surface-container-high:     220 11% 14%;
-    --surface-container-highest:  220 10% 18%;
-    --surface-bright:             220 10% 22%;
-    --surface-variant:            220 10% 20%;
-    --surface-tint:               152 60% 45%;
+    --surface:                    228 22%  6%;
+    --surface-dim:                228 22%  5%;
+    --surface-container-lowest:   228 24%  4%;
+    --surface-container-low:      228 20%  9%;
+    --surface-container:          227 18% 12%;
+    --surface-container-high:     226 16% 16%;
+    --surface-container-highest:  226 14% 21%;
+    --surface-bright:             226 12% 26%;
+    --surface-variant:            226 14% 22%;
+    --surface-tint:               158 64% 52%;
 
-    --on-surface:                 210 20% 96%;
-    --on-surface-variant:         215 14% 70%;
-    --on-background:              210 20% 96%;
-    --inverse-surface:            210 20% 96%;
-    --inverse-on-surface:         220 12% 11%;
+    --on-surface:                 220 30% 97%;
+    --on-surface-variant:         222 16% 70%;
+    --on-background:              220 30% 97%;
+    --inverse-surface:            220 30% 97%;
+    --inverse-on-surface:         228 20%  9%;
 
-    --primary:                    152 60% 45%;
-    --primary-fixed:              152 65% 60%;
-    --primary-fixed-dim:          152 60% 45%;
-    --primary-container:          152 55% 30%;
-    --on-primary:                 152 60%  8%;
-    --on-primary-fixed:           152 60%  8%;
-    --on-primary-fixed-variant:   152 50% 18%;
-    --on-primary-container:       152 60% 92%;
-    --inverse-primary:            152 60% 30%;
+    --primary:                    158 64% 52%;
+    --primary-fixed:              158 70% 64%;
+    --primary-fixed-dim:          158 64% 52%;
+    --primary-container:          160 58% 28%;
+    --on-primary:                 160 70%  7%;
+    --on-primary-fixed:           160 70%  7%;
+    --on-primary-fixed-variant:   160 50% 18%;
+    --on-primary-container:       158 70% 94%;
+    --inverse-primary:            158 64% 32%;
 
-    --secondary:                  215 14% 70%;
-    --secondary-fixed:            215 20% 82%;
-    --secondary-fixed-dim:        215 14% 70%;
-    --secondary-container:        220 10% 22%;
-    --on-secondary:               220 14% 12%;
-    --on-secondary-fixed:         220 14%  8%;
-    --on-secondary-fixed-variant: 220 10% 22%;
-    --on-secondary-container:     215 14% 80%;
+    --secondary:                  222 16% 70%;
+    --secondary-fixed:            222 22% 82%;
+    --secondary-fixed-dim:        222 16% 70%;
+    --secondary-container:        226 14% 22%;
+    --on-secondary:               228 20% 12%;
+    --on-secondary-fixed:         228 20%  8%;
+    --on-secondary-fixed-variant: 226 14% 22%;
+    --on-secondary-container:     222 22% 84%;
 
-    --tertiary:                   200 80% 65%;
-    --tertiary-fixed:             200 85% 75%;
-    --tertiary-fixed-dim:         200 80% 65%;
-    --tertiary-container:         200 60% 30%;
-    --on-tertiary:                200 80% 10%;
-    --on-tertiary-fixed:          200 80%  8%;
-    --on-tertiary-fixed-variant:  200 50% 20%;
-    --on-tertiary-container:      200 80% 94%;
+    --tertiary:                   210 95% 68%;
+    --tertiary-fixed:             210 95% 78%;
+    --tertiary-fixed-dim:         210 95% 68%;
+    --tertiary-container:         212 70% 30%;
+    --on-tertiary:                212 90% 10%;
+    --on-tertiary-fixed:          212 90%  8%;
+    --on-tertiary-fixed-variant:  212 60% 22%;
+    --on-tertiary-container:      210 95% 95%;
 
-    --outline:                    220 10% 40%;
-    --outline-variant:            220 10% 20%;
+    --outline:                    224 12% 42%;
+    --outline-variant:            226 14% 20%;
 
-    --error:                        0 80% 72%;
-    --error-container:              0 60% 22%;
-    --on-error:                     0 80% 12%;
-    --on-error-container:           0 80% 92%;
+    --error:                        4 85% 72%;
+    --error-container:              4 60% 22%;
+    --on-error:                     4 80% 12%;
+    --on-error-container:           4 85% 93%;
 
-    --success:                    152 60% 50%;
-    --on-success:                 152 60%  8%;
-    --warning:                     38 95% 62%;
+    --success:                    158 64% 52%;
+    --on-success:                 160 70%  7%;
+    --warning:                     38 96% 62%;
 
     /* shadcn compat */
-    --background:             220 14%  7%;
-    --foreground:             210 20% 96%;
-    --card:                   220 12% 11%;
-    --card-foreground:        210 20% 96%;
-    --popover:                220 11% 14%;
-    --popover-foreground:     210 20% 96%;
-    --muted:                  220 10% 18%;
-    --muted-foreground:       215 14% 70%;
-    --accent:                 220 10% 18%;
-    --accent-foreground:      210 20% 96%;
-    --destructive:              0 60% 45%;
-    --destructive-foreground: 210 20% 96%;
-    --border:                 220 10% 20%;
-    --input:                  220 10% 20%;
-    --ring:                   152 60% 45%;
-    --radius:                 0.75rem;
+    --background:             228 22%  6%;
+    --foreground:             220 30% 97%;
+    --card:                   227 18% 12%;
+    --card-foreground:        220 30% 97%;
+    --popover:                226 16% 16%;
+    --popover-foreground:     220 30% 97%;
+    --muted:                  226 14% 21%;
+    --muted-foreground:       222 16% 70%;
+    --accent:                 226 14% 21%;
+    --accent-foreground:      220 30% 97%;
+    --destructive:              4 60% 45%;
+    --destructive-foreground: 220 30% 97%;
+    --border:                 226 14% 20%;
+    --input:                  226 14% 24%;
+    --ring:                   158 64% 52%;
+    --radius:                 0.875rem;
+
+    /* Acentos por etapa (estilo pipeline de CRM) */
+    --etapa-nuevo:        210 95% 68%;
+    --etapa-verificacion:  38 96% 62%;
+    --etapa-cobranza:     268 85% 74%;
+    --etapa-seguimiento:  158 64% 52%;
+    --etapa-rechazado:      4 85% 68%;
   }
 
   * { @apply border-border; }
   html, body { height: 100%; }
-  body { @apply bg-background text-foreground antialiased; }
+  body {
+    @apply text-foreground antialiased;
+    background-color: hsl(var(--surface));
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* Capa 1: luces de la paleta que se desplazan lento */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -20%;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 38% at 18% 22%, hsl(158 64% 42% / 0.22), transparent 70%),
+      radial-gradient(38% 34% at 82% 18%, hsl(210 95% 58% / 0.18), transparent 70%),
+      radial-gradient(46% 40% at 70% 86%, hsl(268 85% 62% / 0.14), transparent 70%),
+      radial-gradient(30% 30% at 28% 80%, hsl(38 96% 55% / 0.08), transparent 70%);
+    filter: blur(24px);
+    animation: luces 38s ease-in-out infinite alternate;
+  }
+  /* Capa 2: grano fino + viñeta para que la profundidad se sienta */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(120% 90% at 50% 40%, transparent 55%, hsl(228 30% 2% / 0.75) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: auto, 160px 160px;
+  }
+  @keyframes luces {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(3%, -2%, 0) scale(1.06); }
+    100% { transform: translate3d(-3%, 3%, 0) scale(1.02); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body::before { animation: none; }
+    .card-hover { transition: none; }
+  }
+  @media print {
+    body { background: #fff; color: #111; }
+    body::before, body::after { display: none; }
+  }
 }
 
-/* Burbujas de chat */
-.bubble-in  { @apply rounded-2xl rounded-tl-sm bg-surface-container-high text-on-surface; }
-.bubble-out { @apply rounded-2xl rounded-tr-sm bg-primary-container text-on-primary-container; }
+@layer components {
+  /* Panel de vidrio esmerilado (barra superior, sidebar) */
+  .glass {
+    background: linear-gradient(180deg, hsl(228 20% 12% / 0.72), hsl(228 20% 9% / 0.6));
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid hsl(220 30% 100% / 0.07);
+    box-shadow: 0 1px 0 hsl(220 30% 100% / 0.05) inset, 0 20px 50px -30px hsl(228 40% 2% / 0.9);
+  }
+
+  /* Tarjeta con elevación real: borde de luz arriba, sombra profunda abajo */
+  .card {
+    background: linear-gradient(180deg, hsl(227 18% 14% / 0.96), hsl(227 18% 11% / 0.96));
+    border: 1px solid hsl(220 30% 100% / 0.07);
+    box-shadow:
+      0 1px 0 hsl(220 30% 100% / 0.06) inset,
+      0 8px 24px -12px hsl(228 40% 2% / 0.8),
+      0 24px 48px -32px hsl(228 40% 2% / 0.9);
+    border-radius: var(--radius);
+  }
+  .card-hover {
+    transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, border-color .25s;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    border-color: hsl(220 30% 100% / 0.14);
+    box-shadow:
+      0 1px 0 hsl(220 30% 100% / 0.08) inset,
+      0 14px 32px -14px hsl(228 40% 2% / 0.9),
+      0 32px 64px -32px hsl(158 64% 52% / 0.25);
+  }
+
+  /* Columna del pipeline */
+  .pipeline-col {
+    background: linear-gradient(180deg, hsl(228 20% 10% / 0.55), hsl(228 20% 8% / 0.35));
+    border: 1px solid hsl(220 30% 100% / 0.05);
+    border-radius: 1.25rem;
+  }
+  .pipeline-col > header { border-top: 3px solid hsl(var(--etapa-color)); }
+  .etapa-dot { background: hsl(var(--etapa-color)); box-shadow: 0 0 12px hsl(var(--etapa-color) / 0.7); }
+  .etapa-text { color: hsl(var(--etapa-color)); }
+
+  /* Avatar de iniciales con degradé por etapa */
+  .avatar {
+    background: linear-gradient(135deg, hsl(var(--etapa-color, var(--primary)) / 0.95), hsl(var(--etapa-color, var(--primary)) / 0.55));
+    color: hsl(228 30% 6%);
+    box-shadow: 0 0 0 2px hsl(228 20% 8%), 0 6px 16px -6px hsl(var(--etapa-color, var(--primary)) / 0.7);
+  }
+
+  /* KPI del tablero */
+  .kpi-num {
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff, hsl(220 30% 80%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Barra de score */
+  .score-bar { background: hsl(220 30% 100% / 0.06); }
+  .score-fill { background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-fixed))); box-shadow: 0 0 14px hsl(var(--primary) / 0.6); }
+
+  /* Chat estilo WhatsApp */
+  .wa-wallpaper {
+    background-color: hsl(200 12% 9%);
+    background-image:
+      radial-gradient(hsl(200 20% 100% / 0.035) 1px, transparent 1px),
+      radial-gradient(hsl(200 20% 100% / 0.025) 1px, transparent 1px);
+    background-size: 22px 22px, 22px 22px;
+    background-position: 0 0, 11px 11px;
+  }
+  .bubble-in  { @apply rounded-2xl rounded-tl-sm; background: hsl(210 10% 18%); color: hsl(var(--on-surface)); box-shadow: 0 1px 2px hsl(228 40% 2% / 0.6); }
+  .bubble-out { @apply rounded-2xl rounded-tr-sm; background: hsl(158 50% 22%); color: hsl(158 60% 96%); box-shadow: 0 1px 2px hsl(228 40% 2% / 0.6); }
+
+  /* Marco del teléfono */
+  .phone {
+    border-radius: 2.6rem;
+    border: 10px solid hsl(228 14% 12%);
+    box-shadow:
+      0 0 0 1px hsl(220 30% 100% / 0.08),
+      0 0 0 2px hsl(228 14% 6%),
+      0 40px 80px -30px hsl(228 40% 2%),
+      0 0 120px -20px hsl(158 64% 52% / 0.25);
+  }
+  .phone-notch {
+    width: 120px; height: 26px; border-radius: 0 0 16px 16px;
+    background: hsl(228 14% 12%);
+    position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  }
+}

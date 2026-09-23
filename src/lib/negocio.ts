@@ -34,7 +34,7 @@ export const NEGOCIO = {
  */
 export const VENDEDORES: Array<{ phone: string; nombre: string; sucursal: string }> = [
   { phone: '5493885000001', nombre: 'Ramiro Quispe', sucursal: 'La Quiaca' },
-  { phone: '5491155550002', nombre: 'Vendedor de prueba', sucursal: 'Sucursal demo' },
+  { phone: '5491155550002', nombre: 'Matías Ledesma', sucursal: 'Tilcara' },
 ]
 
 export const ETAPAS = ['nuevo', 'verificacion', 'cobranza', 'seguimiento', 'rechazado'] as const

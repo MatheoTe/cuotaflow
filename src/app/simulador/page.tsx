@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Paperclip, X } from 'lucide-react'
+import { Paperclip, Phone, Video, MoreVertical, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChatThread } from '@/components/chat-thread'
-import { VENDEDORES } from '@/lib/negocio'
+import { NEGOCIO, VENDEDORES } from '@/lib/negocio'
 import type { Consulta, Contact, Message } from '@/lib/types'
 
 const CLIENTE_DEMO = '5491155550001'
@@ -78,30 +78,30 @@ export default function Simulador() {
   const esVendedor = contact?.tipo === 'vendedor' || phone === VENDEDOR_DEMO.phone
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[400px_1fr]">
+    <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[380px_1fr]">
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="font-display text-headline-sm font-semibold">Simulador</h1>
-          <p className="text-body-sm text-on-surface-variant">Escribí como si fueras un cliente o un vendedor. Cada mensaje entra por el mismo camino que WhatsApp y actualiza el tablero.</p>
+          <h1 className="font-display text-headline-sm font-semibold">Probá al agente</h1>
+          <p className="mt-1 text-body-sm text-on-surface-variant">Escribí como si fueras un cliente o un vendedor. Cada mensaje entra por el mismo camino que WhatsApp y mueve el pipeline en vivo.</p>
         </div>
-        <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-4">
+        <div className="card p-4">
           <div className="mb-3 flex gap-2">
             <Button size="sm" variant={phone === CLIENTE_DEMO ? 'default' : 'outline'} onClick={() => { setPhone(CLIENTE_DEMO); setName('') }}>Soy cliente</Button>
             <Button size="sm" variant={phone === VENDEDOR_DEMO.phone ? 'default' : 'outline'} onClick={() => { setPhone(VENDEDOR_DEMO.phone); setName(VENDEDOR_DEMO.nombre) }}>Soy vendedor</Button>
           </div>
-          <label className="mb-1 block text-label-sm uppercase tracking-wide text-on-surface-variant">Número</label>
-          <Input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} inputMode="numeric" />
-          <label className="mb-1 mt-3 block text-label-sm uppercase tracking-wide text-on-surface-variant">Nombre de perfil (opcional)</label>
-          <Input value={name} onChange={e => setName(e.target.value)} placeholder="Como aparece en WhatsApp" />
-          <p className="mt-3 text-label-md text-on-surface-variant">
+          <label className="mb-1 block text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Número</label>
+          <Input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ''))} inputMode="numeric" className="bg-black/20" />
+          <label className="mb-1 mt-3 block text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Nombre de perfil</label>
+          <Input value={name} onChange={e => setName(e.target.value)} placeholder="Como aparece en WhatsApp" className="bg-black/20" />
+          <p className="mt-3 text-label-md leading-relaxed text-on-surface-variant">
             {esVendedor
               ? 'Como vendedor: mandá nombre, DNI y banco del cliente, o la foto del DNI con el clip. El sistema califica y te contesta.'
               : 'Cambiá el número para empezar otra conversación.'}
           </p>
         </div>
         {contact && (
-          <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-4 text-body-sm">
-            <div className="mb-1 text-label-sm uppercase tracking-wide text-on-surface-variant">Lo que ve el operador</div>
+          <div className="card p-4 text-body-sm">
+            <div className="mb-2 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Lo que ve el operador</div>
             {consulta ? (
               <>
                 <div>Consulta: <b>{consulta.nombre_cliente ?? 'sin nombre'}</b>{consulta.dni ? ` · DNI ${consulta.dni}` : ''}</div>
@@ -120,28 +120,40 @@ export default function Simulador() {
         )}
       </div>
 
-      <div className="flex h-[75vh] flex-col overflow-hidden rounded-[2rem] border-4 border-surface-container-highest bg-surface-container-lowest">
-        <div className="border-b border-outline-variant bg-surface-container px-4 py-3 text-body-sm font-medium">Créditos Río · WhatsApp</div>
-        <div className="flex-1 overflow-y-auto p-4">
-          <ChatThread messages={messages} />
-          {loading && <div className="bubble-in mt-2 w-fit px-3 py-2 text-label-md text-on-surface-variant">escribiendo…</div>}
-          <div ref={bottom} />
-        </div>
-        {error && <div className="bg-error-container px-4 py-2 text-label-md text-on-error-container">{error}</div>}
-        {foto && (
-          <div className="flex items-center gap-3 border-t border-outline-variant bg-surface-container px-3 py-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={foto.preview} alt="Adjunto" className="h-14 rounded-md" />
-            <span className="text-label-md text-on-surface-variant">Foto lista para enviar</span>
-            <button type="button" onClick={() => setFoto(null)} className="ml-auto text-on-surface-variant hover:text-on-surface" aria-label="Quitar foto"><X className="h-4 w-4" /></button>
+      <div className="mx-auto w-full max-w-[420px]">
+        <div className="phone relative flex h-[78vh] min-h-[560px] flex-col overflow-hidden bg-surface-container-lowest">
+          <div className="phone-notch z-10" />
+          <div className="flex items-center gap-3 border-b border-white/5 bg-[hsl(200_14%_11%)] px-4 pb-3 pt-9">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-tertiary text-label-lg font-bold text-on-primary">S</span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-body-sm font-medium">{NEGOCIO.nombre}</div>
+              <div className="text-label-sm text-on-surface-variant">{loading ? 'escribiendo…' : 'en línea'}</div>
+            </div>
+            <Video className="h-4 w-4 text-on-surface-variant" />
+            <Phone className="h-4 w-4 text-on-surface-variant" />
+            <MoreVertical className="h-4 w-4 text-on-surface-variant" />
           </div>
-        )}
-        <form onSubmit={enviar} className="flex gap-2 border-t border-outline-variant bg-surface-container p-3">
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={elegirFoto} />
-          <Button type="button" variant="ghost" size="icon" onClick={() => fileRef.current?.click()} aria-label="Adjuntar foto"><Paperclip className="h-4 w-4" /></Button>
-          <Input value={text} onChange={e => setText(e.target.value)} placeholder={foto ? 'Texto opcional para la foto' : 'Escribí un mensaje'} autoFocus />
-          <Button type="submit" disabled={loading || (!text.trim() && !foto)}>Enviar</Button>
-        </form>
+          <div className="wa-wallpaper flex-1 overflow-y-auto p-3">
+            <ChatThread messages={messages} />
+            {loading && <div className="bubble-in mt-2 w-fit px-3 py-2 text-label-md text-on-surface-variant">escribiendo…</div>}
+            <div ref={bottom} />
+          </div>
+          {error && <div className="bg-error-container px-4 py-2 text-label-md text-on-error-container">{error}</div>}
+          {foto && (
+            <div className="flex items-center gap-3 border-t border-white/5 bg-[hsl(200_14%_11%)] px-3 py-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={foto.preview} alt="Adjunto" className="h-14 rounded-md" />
+              <span className="text-label-md text-on-surface-variant">Foto lista para enviar</span>
+              <button type="button" onClick={() => setFoto(null)} className="ml-auto text-on-surface-variant hover:text-on-surface" aria-label="Quitar foto"><X className="h-4 w-4" /></button>
+            </div>
+          )}
+          <form onSubmit={enviar} className="flex items-center gap-2 border-t border-white/5 bg-[hsl(200_14%_11%)] p-2.5">
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={elegirFoto} />
+            <Button type="button" variant="ghost" size="icon" onClick={() => fileRef.current?.click()} aria-label="Adjuntar foto"><Paperclip className="h-4 w-4" /></Button>
+            <Input value={text} onChange={e => setText(e.target.value)} placeholder={foto ? 'Texto opcional para la foto' : 'Mensaje'} autoFocus className="rounded-full border-white/10 bg-black/30" />
+            <Button type="submit" size="icon" disabled={loading || (!text.trim() && !foto)} aria-label="Enviar">➤</Button>
+          </form>
+        </div>
       </div>
     </div>
   )
