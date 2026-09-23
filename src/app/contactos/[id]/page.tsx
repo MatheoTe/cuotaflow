@@ -7,6 +7,7 @@ import { calcularScore, etiquetaScore, formatoARS } from '@/lib/scoring'
 import { Badge } from '@/components/ui/badge'
 import { ChatThread } from '@/components/chat-thread'
 import { ContactActions } from '@/components/contact-actions'
+import { ConsultaCard } from '@/components/contact-card'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { Avatar } from '@/components/contact-card'
 
@@ -27,6 +28,7 @@ export default async function Contacto({ params }: { params: Promise<{ id: strin
   const c = await store.getContact(id)
   if (!c) notFound()
   const messages = await store.listMessages(c.id)
+  const consultasVendedor = c.tipo === 'vendedor' ? (await store.listConsultas()).filter(q => q.vendedor_id === c.id) : []
   const { score, razones } = calcularScore(c.datos)
   const et = etiquetaScore(score)
 
@@ -52,12 +54,22 @@ export default async function Contacto({ params }: { params: Promise<{ id: strin
             <div className="truncate font-medium">{c.name ?? `+${c.phone}`}</div>
             <div className="text-label-md text-on-surface-variant">{c.tipo === 'vendedor' ? `Vendedor${c.sucursal ? ` · ${c.sucursal}` : ''}` : ETAPA_LABEL[c.stage]}{c.proximo_paso ? ` · ${c.proximo_paso}` : ''}</div>
           </div>
-          <Badge variant={et.variant}>{score > 0 ? `${score} · ${et.label}` : et.label}</Badge>
+          {c.tipo === 'vendedor' ? <Badge variant="secondary">{consultasVendedor.length} {consultasVendedor.length === 1 ? 'consulta' : 'consultas'}</Badge> : <Badge variant={et.variant}>{score > 0 ? `${score} · ${et.label}` : et.label}</Badge>}
         </header>
         <ChatThread messages={messages} className="wa-wallpaper flex-1 overflow-y-auto p-4" />
       </section>
 
       <aside className="flex flex-col gap-5">
+        {c.tipo === 'vendedor' ? (
+          <div className="card p-4">
+            <h2 className="mb-3 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Consultas de este vendedor</h2>
+            <div className="flex flex-col gap-2.5">
+              {consultasVendedor.map(q => <ConsultaCard key={q.id} c={q} vendedor={c} />)}
+              {consultasVendedor.length === 0 && <p className="text-body-sm text-on-surface-variant">Todavía no mandó ninguna consulta.</p>}
+            </div>
+            {c.resumen && <p className="mt-3 border-t border-white/5 pt-3 text-body-sm leading-relaxed">{c.resumen}</p>}
+          </div>
+        ) : (
         <div className="card p-4">
           <h2 className="mb-3 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Ficha</h2>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-body-sm">
@@ -65,7 +77,9 @@ export default async function Contacto({ params }: { params: Promise<{ id: strin
           </dl>
           {c.resumen && <p className="mt-3 border-t border-white/5 pt-3 text-body-sm leading-relaxed">{c.resumen}</p>}
         </div>
+        )}
 
+        {c.tipo !== 'vendedor' && (
         <div className="card p-4">
           <h2 className="mb-2 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Calificación del sistema</h2>
           <div className="score-bar mb-2 h-2 overflow-hidden rounded-full">
@@ -76,6 +90,7 @@ export default async function Contacto({ params }: { params: Promise<{ id: strin
             {razones.length === 0 && <li>Todavía no hay datos para calificar.</li>}
           </ul>
         </div>
+        )}
 
         <div className="card p-4">
           <ContactActions c={c} />

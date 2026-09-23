@@ -20,16 +20,18 @@ const auth = () => ({ Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` })
 function variantesArgentina(to: string): string[] {
   if (!/^549\d{10}$/.test(to)) return []
   const resto = to.slice(3)
-  return [2, 3, 4].map(n => `54${resto.slice(0, n)}15${resto.slice(n)}`)
+  // Primero área de 3 dígitos (la mayoría del país), después 2 (AMBA) y 4.
+  return [3, 2, 4].map(n => `54${resto.slice(0, n)}15${resto.slice(n)}`)
 }
 
 export async function enviarTexto(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
   if (!whatsappConfigurado()) return { ok: false, error: 'WhatsApp no configurado (falta WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID)' }
   let r = await enviarTextoA(to, body)
   if (!r.ok && r.error?.includes('131030')) {
+    // Meta contesta distinto según la variante (131030 o 131005): se prueban todas.
     for (const alt of variantesArgentina(to)) {
       r = await enviarTextoA(alt, body)
-      if (r.ok || !r.error?.includes('131030')) break
+      if (r.ok) break
     }
   }
   return r
