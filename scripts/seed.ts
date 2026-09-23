@@ -81,7 +81,7 @@ async function sembrarVendedor(store: ReturnType<typeof db>) {
     const etapa = q.dias >= 5 && etapaPorScore(score) === 'verificacion' ? 'seguimiento' : etapaPorScore(score)
     await store.updateConsulta(k.id, backdate({ ...base, completa: true, score, stage: etapa, telefono_cliente: q.nombre.startsWith('Mamani') ? '5493885441122' : null,
       resumen: q.nombre.startsWith('Mamani') ? 'Rosa Mamani, Banco Nación, situación 1. Pre-aprobada por 400 mil, teléfono tomado.' : q.nombre.startsWith('Choque') ? 'Daniel Choque, Macro, situación 3 con deuda. No pre-aprobado por 900 mil; pendiente si el vendedor pide revisión.' : q.hilo[1][1],
-      proximo_paso: q.nombre.startsWith('Mamani') ? 'Llamar a Rosa para la verificación' : etapa === 'seguimiento' ? 'Coordinar desembolso' : 'Esperar al vendedor' }, hace(q.dias, 11 + q.dias % 6)))
+      proximo_paso: q.nombre.startsWith('Mamani') ? 'Llamar a Rosa para la verificación' : etapa === 'seguimiento' ? 'Coordinar desembolso' : 'Esperar al vendedor' }, hace(q.dias, 11 + q.dias % 6), false))
   }
   console.log('creado', v.nombre, 'con', consultas.length, 'consultas')
 }
@@ -89,7 +89,8 @@ async function sembrarVendedor(store: ReturnType<typeof db>) {
 /** Fecha hace N días, a una hora de oficina, para repartir los casos en el tiempo. */
 const hace = (dias: number, hora = 10) => { const d = new Date(); d.setDate(d.getDate() - dias); d.setHours(hora, 15, 0, 0); return d.toISOString() }
 /** Backdate de un contacto o consulta: created_at no está en el tipo del patch, se fuerza. */
-const backdate = <T extends object>(patch: T, iso: string) => ({ ...patch, created_at: iso, updated_at: iso, last_message_at: iso }) as unknown as T
+const backdate = <T extends object>(patch: T, iso: string, conMensaje = true) =>
+  ({ ...patch, created_at: iso, updated_at: iso, ...(conMensaje ? { last_message_at: iso } : {}) }) as unknown as T
 
 async function main() {
   const reset = process.argv.includes('--reset')
