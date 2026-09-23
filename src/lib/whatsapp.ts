@@ -11,8 +11,31 @@ export function whatsappConfigurado(): boolean {
 
 const auth = () => ({ Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` })
 
+/**
+ * Argentina: WhatsApp identifica a los celulares como 54 9 <área> <número>, pero
+ * la lista de destinatarios del número de prueba de Meta los guarda como
+ * 54 <área> 15 <número>. Si Meta rechaza el primero (error 131030), se prueba
+ * con las variantes del segundo formato (área de 2, 3 o 4 dígitos).
+ */
+function variantesArgentina(to: string): string[] {
+  if (!/^549\d{10}$/.test(to)) return []
+  const resto = to.slice(3)
+  return [2, 3, 4].map(n => `54${resto.slice(0, n)}15${resto.slice(n)}`)
+}
+
 export async function enviarTexto(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
   if (!whatsappConfigurado()) return { ok: false, error: 'WhatsApp no configurado (falta WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID)' }
+  let r = await enviarTextoA(to, body)
+  if (!r.ok && r.error?.includes('131030')) {
+    for (const alt of variantesArgentina(to)) {
+      r = await enviarTextoA(alt, body)
+      if (r.ok || !r.error?.includes('131030')) break
+    }
+  }
+  return r
+}
+
+async function enviarTextoA(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch(`${GRAPH}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: { ...auth(), 'Content-Type': 'application/json' },
