@@ -2,17 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, KanbanSquare, MessagesSquare, Search, Smartphone, Sparkles } from 'lucide-react'
+import { Bell, KanbanSquare, LayoutDashboard, MessagesSquare, Search, Smartphone, Sparkles } from 'lucide-react'
 import { NEGOCIO } from '@/lib/negocio'
 import { cn } from '@/lib/utils'
 
 const NAV = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/tablero', label: 'Pipeline', icon: KanbanSquare },
   { href: '/conversaciones', label: 'Conversaciones', icon: MessagesSquare },
   { href: '/simulador', label: 'Simulador', icon: Smartphone },
 ]
 
 const TITULOS: Array<[RegExp, string]> = [
+  [/^\/$/, 'Dashboard'],
   [/^\/tablero/, 'Pipeline'],
   [/^\/conversaciones/, 'Conversaciones'],
   [/^\/simulador/, 'Simulador de WhatsApp'],
@@ -26,7 +28,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="glass sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col rounded-none border-y-0 border-l-0 p-4 md:flex">
-        <Link href="/tablero" className="mb-8 flex items-center gap-3 px-2">
+        <Link href="/" className="mb-8 flex items-center gap-3 px-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-tertiary text-on-primary shadow-lg shadow-primary/30">
             <Sparkles className="h-5 w-5" />
           </span>
@@ -37,7 +39,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Link>
         <nav className="flex flex-col gap-1">
           {NAV.map(({ href, label, icon: Icon }) => {
-            const activo = path.startsWith(href)
+            const activo = href === '/' ? path === '/' : path.startsWith(href)
             return (
               <Link key={href} href={href} className={cn('group flex items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm transition-all', activo ? 'bg-primary/15 text-on-surface shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]' : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface')}>
                 <Icon className={cn('h-4 w-4 transition-colors', activo ? 'text-primary' : 'text-on-surface-variant group-hover:text-on-surface')} />
@@ -69,7 +71,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span className="w-44">Buscar contacto o DNI</span>
           </div>
           <nav className="flex gap-3 text-body-sm md:hidden">
-            {NAV.map(n => <Link key={n.href} href={n.href} className={cn(path.startsWith(n.href) ? 'text-primary' : 'text-on-surface-variant')}>{n.label}</Link>)}
+            {NAV.map(n => <Link key={n.href} href={n.href} className={cn((n.href === '/' ? path === '/' : path.startsWith(n.href)) ? 'text-primary' : 'text-on-surface-variant')}>{n.label}</Link>)}
           </nav>
           <button className="relative hidden h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-on-surface-variant md:flex" aria-label="Notificaciones">
             <Bell className="h-4 w-4" />

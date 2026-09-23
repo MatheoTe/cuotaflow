@@ -91,6 +91,13 @@
     --etapa-cobranza:     268 85% 74%;
     --etapa-seguimiento:  158 64% 52%;
     --etapa-rechazado:      4 85% 68%;
+
+    /* Paleta de gráficos (validada para daltonismo y contraste sobre la tarjeta) */
+    --chart-nuevo:        210 90% 58%;
+    --chart-verificacion:  36 90% 40%;
+    --chart-cobranza:     268 80% 62%;
+    --chart-seguimiento:  158 60% 42%;
+    --chart-rechazado:      4 80% 56%;
   }
 
   * { @apply border-border; }
