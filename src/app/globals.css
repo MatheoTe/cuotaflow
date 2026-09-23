@@ -91,6 +91,13 @@
     --etapa-cobranza:     268 85% 74%;
     --etapa-seguimiento:  158 64% 52%;
     --etapa-rechazado:      4 85% 68%;
+    /* Embudo de cobranzas */
+    --etapa-por_vencer:    210 95% 68%;
+    --etapa-mora_temprana:  38 96% 62%;
+    --etapa-contactado:    268 85% 74%;
+    --etapa-promesa:       188 80% 58%;
+    --etapa-regularizado:  158 64% 52%;
+    --etapa-mora_tardia:     4 85% 68%;
 
     /* Paleta de gráficos (validada para daltonismo y contraste sobre la tarjeta) */
     --chart-nuevo:        210 90% 58%;

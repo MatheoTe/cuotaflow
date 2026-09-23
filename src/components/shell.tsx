@@ -21,6 +21,7 @@ const TITULOS: Array<[RegExp, string]> = [
   [/^\/simulador/, 'Simulador de WhatsApp'],
   [/^\/contactos/, 'Ficha del contacto'],
   [/^\/consultas/, 'Consulta de vendedor'],
+  [/^\/cobranzas/, 'Cuenta en cobranza'],
   [/^\/consulta$/, 'Nueva consulta'],
 ]
 
@@ -41,7 +42,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Link>
         <nav className="flex flex-col gap-1">
           {NAV.map(({ href, label, icon: Icon }) => {
-            const activo = href === '/' ? path === '/' : path.startsWith(href)
+            const activo = href === '/' ? path === '/' : path.startsWith(href) || (href === '/tablero' && path.startsWith('/cobranzas'))
             return (
               <Link key={href} href={href} className={cn('group flex items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm transition-all', activo ? 'bg-primary/15 text-on-surface shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]' : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface')}>
                 <Icon className={cn('h-4 w-4 transition-colors', activo ? 'text-primary' : 'text-on-surface-variant group-hover:text-on-surface')} />

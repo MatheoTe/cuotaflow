@@ -6,6 +6,7 @@ import { db } from '@/lib/db'
 import { ETAPAS, ETAPA_LABEL, PLANTILLAS, type Etapa } from '@/lib/negocio'
 import { enviarTexto, whatsappConfigurado } from '@/lib/whatsapp'
 import { formatoARS } from '@/lib/scoring'
+import { cobranzas, ETAPAS_COBRANZA, ETAPA_COBRANZA_LABEL, type EtapaCobranza, type Gestion } from '@/lib/cobranzas'
 
 function refrescar(id: string, tipo: 'contactos' | 'consultas' = 'contactos') {
   revalidatePath('/tablero')
@@ -100,4 +101,54 @@ export async function borrarConsulta(id: string) {
   await db().deleteConsulta(id)
   revalidatePath('/'); revalidatePath('/tablero')
   redirect('/tablero')
+}
+
+/* ── Embudo de cobranzas ── */
+
+
+function refrescarCobranza(id: string) {
+  revalidatePath('/tablero')
+  revalidatePath(`/cobranzas/${id}`)
+}
+
+export async function cambiarEtapaCobranza(id: string, stage: string) {
+  if (!ETAPAS_COBRANZA.includes(stage as EtapaCobranza)) throw new Error('etapa inválida')
+  const s = cobranzas()
+  const c = await s.get(id)
+  if (!c || c.stage === stage) return
+  const g: Gestion = { fecha: new Date().toISOString(), canal: 'sistema', resultado: 'cambio_etapa', operador: c.operador ?? 'Operador', nota: `Pasó de ${ETAPA_COBRANZA_LABEL[c.stage]} a ${ETAPA_COBRANZA_LABEL[stage as EtapaCobranza]}` }
+  await s.update(id, { stage: stage as EtapaCobranza, gestiones: [...c.gestiones, g] })
+  refrescarCobranza(id)
+}
+
+export async function registrarGestion(id: string, formData: FormData): Promise<{ ok: boolean; detalle: string }> {
+  const s = cobranzas()
+  const c = await s.get(id)
+  if (!c) throw new Error('cuenta no existe')
+  const canal = String(formData.get('canal') ?? 'llamada') as Gestion['canal']
+  const resultado = String(formData.get('resultado') ?? 'contactado') as Gestion['resultado']
+  const nota = String(formData.get('nota') ?? '').trim() || 'Gestión registrada'
+  const monto = Number(String(formData.get('monto') ?? '').replace(/\D/g, '')) || null
+  const promesaFecha = String(formData.get('promesa_fecha') ?? '') || null
+  const g: Gestion = { fecha: new Date().toISOString(), canal, resultado, operador: c.operador ?? 'Operador', nota, monto }
+  const patch: Parameters<typeof s.update>[1] = { gestiones: [...c.gestiones, g] }
+  if (resultado === 'contactado' && (c.stage === 'mora_temprana' || c.stage === 'mora_tardia')) patch.stage = 'contactado'
+  if (resultado === 'promesa') Object.assign(patch, { stage: 'promesa', promesa_fecha: promesaFecha, promesa_monto: monto ?? c.saldo_vencido })
+  if (resultado === 'pago') Object.assign(patch, { stage: 'regularizado', recuperado: c.recuperado + (monto ?? c.saldo_vencido), saldo_vencido: 0, cuotas_vencidas: 0, dias_mora: 0, cuotas_pagas: c.cuotas_pagas + c.cuotas_vencidas, promesa_fecha: null, promesa_monto: null })
+  await s.update(id, patch)
+  refrescarCobranza(id)
+  return { ok: true, detalle: 'Gestión registrada en el historial.' }
+}
+
+export async function enviarRecordatorioCobranza(id: string): Promise<{ ok: boolean; detalle: string }> {
+  const s = cobranzas()
+  const c = await s.get(id)
+  if (!c) throw new Error('cuenta no existe')
+  const nota = c.dias_mora > 0
+    ? `Plantilla de deuda: ${c.cuotas_vencidas} cuota(s) vencida(s) por ${formatoARS(c.saldo_vencido)}, con medios de pago y botón de baja`
+    : `Plantilla de recordatorio: cuota de ${formatoARS(c.cuota)} vence el ${c.vencimiento ?? 'próximo vencimiento'}`
+  const g: Gestion = { fecha: new Date().toISOString(), canal: 'plantilla', resultado: 'recordatorio', operador: 'Sistema', nota }
+  await s.update(id, { gestiones: [...c.gestiones, g] })
+  refrescarCobranza(id)
+  return { ok: true, detalle: 'Plantilla registrada. Con la línea de cobranzas conectada sale por WhatsApp como plantilla aprobada por Meta.' }
 }

@@ -4,10 +4,24 @@ import { ContactCard, ConsultaCard, etapaVar } from '@/components/contact-card'
 import { AutoRefresh } from '@/components/auto-refresh'
 import { whatsappConfigurado } from '@/lib/whatsapp'
 import { formatoARS } from '@/lib/scoring'
+import { cobranzas } from '@/lib/cobranzas'
+import { SelectorEmbudo } from '@/components/selector-embudo'
+import { EmbudoCobranzas } from '@/components/embudo-cobranzas'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Tablero() {
+export default async function Tablero({ searchParams }: { searchParams: Promise<{ embudo?: string }> }) {
+  const { embudo } = await searchParams
+  if (embudo === 'cobranzas') {
+    const cuentas = await cobranzas().list()
+    return (
+      <div>
+        <AutoRefresh />
+        <SelectorEmbudo actual="cobranzas" />
+        <EmbudoCobranzas cuentas={cuentas} />
+      </div>
+    )
+  }
   const store = db()
   const [contacts, consultas] = await Promise.all([store.listContacts(), store.listConsultas()])
   const clientes = contacts.filter(c => c.tipo === 'cliente')
@@ -28,6 +42,7 @@ export default async function Tablero() {
   return (
     <div>
       <AutoRefresh />
+      <SelectorEmbudo actual="originacion" />
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(k => (
           <div key={k.label} className="card p-4">
