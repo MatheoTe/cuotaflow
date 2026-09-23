@@ -6,7 +6,10 @@ import { Paperclip, Phone, Video, MoreVertical, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChatThread } from '@/components/chat-thread'
-import { NEGOCIO, VENDEDORES } from '@/lib/negocio'
+import { NEGOCIO, VENDEDORES, ETAPA_LABEL } from '@/lib/negocio'
+import { etiquetaScore, formatoARS } from '@/lib/scoring'
+import { Badge } from '@/components/ui/badge'
+import { Meter } from '@/components/charts'
 import type { Consulta, Contact, Message } from '@/lib/types'
 
 const CLIENTE_DEMO = '5491155550001'
@@ -101,21 +104,48 @@ export default function Simulador() {
         </div>
         {contact && (
           <div className="card p-4 text-body-sm">
-            <div className="mb-2 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Lo que ve el operador</div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Ficha en vivo</span>
+              {consulta ? (
+                <Badge variant={consulta.completa ? etiquetaScore(consulta.score).variant : 'outline'}>{consulta.completa ? `${consulta.score} · ${etiquetaScore(consulta.score).label}` : 'Incompleta'}</Badge>
+              ) : (
+                <Badge variant={etiquetaScore(contact.score).variant}>{contact.score > 0 ? `${contact.score} · ${etiquetaScore(contact.score).label}` : 'Sin calificar'}</Badge>
+              )}
+            </div>
             {consulta ? (
-              <>
-                <div>Consulta: <b>{consulta.nombre_cliente ?? 'sin nombre'}</b>{consulta.dni ? ` · DNI ${consulta.dni}` : ''}</div>
-                <div>Etapa: <b>{consulta.stage}</b> · Score: <b>{consulta.completa ? consulta.score : 'pendiente'}</b></div>
-                {consulta.resumen && <p className="mt-1 text-on-surface-variant">{consulta.resumen}</p>}
-                <Link href={`/consultas/${consulta.id}`} className="mt-2 inline-block text-primary underline-offset-4 hover:underline">Abrir consulta</Link>
-              </>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                {([
+                  ['Cliente', consulta.nombre_cliente],
+                  ['DNI', consulta.dni],
+                  ['Banco', consulta.banco],
+                  ['Monto', consulta.monto ? formatoARS(consulta.monto) : null],
+                  ['Teléfono', consulta.telefono_cliente ? `+${consulta.telefono_cliente}` : null],
+                  ['Situación', consulta.bureau ? `${consulta.bureau.situacion}` : null],
+                  ['Etapa', ETAPA_LABEL[consulta.stage]],
+                  ['Fotos', consulta.fotos.length ? String(consulta.fotos.length) : null],
+                ] as Array<[string, string | null | undefined]>).map(([k, v]) => (
+                  <div key={k} className="contents"><dt className="text-on-surface-variant">{k}</dt><dd className={v ? 'truncate' : 'text-on-surface-variant/50'}>{v ?? '—'}</dd></div>
+                ))}
+              </dl>
             ) : (
-              <>
-                <div>Etapa: <b>{contact.stage}</b> · Score: <b>{contact.score}</b></div>
-                {contact.resumen && <p className="mt-1 text-on-surface-variant">{contact.resumen}</p>}
-                <Link href={`/contactos/${contact.id}`} className="mt-2 inline-block text-primary underline-offset-4 hover:underline">Abrir ficha</Link>
-              </>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                {([
+                  ['Nombre', contact.datos.nombre ?? contact.name],
+                  ['Monto', contact.datos.monto_solicitado ? formatoARS(contact.datos.monto_solicitado) : null],
+                  ['Destino', contact.datos.destino],
+                  ['Trabajo', contact.datos.situacion_laboral],
+                  ['Ingresos', contact.datos.ingresos_mensuales ? formatoARS(contact.datos.ingresos_mensuales) : null],
+                  ['Edad', contact.datos.edad ? String(contact.datos.edad) : null],
+                  ['Turno', contact.datos.turno_verificacion],
+                  ['Etapa', ETAPA_LABEL[contact.stage]],
+                ] as Array<[string, string | null | undefined]>).map(([k, v]) => (
+                  <div key={k} className="contents"><dt className="text-on-surface-variant">{k}</dt><dd className={v ? 'truncate' : 'text-on-surface-variant/50'}>{v ?? '—'}</dd></div>
+                ))}
+              </dl>
             )}
+            {(consulta ?? contact).score > 0 && <div className="mt-3"><Meter value={(consulta ?? contact).score} color="hsl(var(--primary))" /></div>}
+            {(consulta?.resumen ?? contact.resumen) && <p className="mt-3 border-t border-white/5 pt-2 text-label-md leading-relaxed text-on-surface-variant">{consulta?.resumen ?? contact.resumen}</p>}
+            <Link href={consulta ? `/consultas/${consulta.id}` : `/contactos/${contact.id}`} className="mt-2 inline-block text-label-md text-primary underline-offset-4 hover:underline">{consulta ? 'Abrir consulta' : 'Abrir ficha'}</Link>
           </div>
         )}
       </div>
