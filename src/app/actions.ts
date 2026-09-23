@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
 import { ETAPAS, ETAPA_LABEL, PLANTILLAS, type Etapa } from '@/lib/negocio'
 import { enviarTexto, whatsappConfigurado } from '@/lib/whatsapp'
@@ -85,4 +86,18 @@ async function despachar(id: string, phone: string, body: string, kind: 'recorda
   }
   refrescar(id)
   return { ok: true, detalle }
+}
+
+/* ── Borrado (para resetear la demo) ── */
+
+export async function borrarContacto(id: string) {
+  await db().deleteContact(id)
+  revalidatePath('/'); revalidatePath('/tablero'); revalidatePath('/conversaciones')
+  redirect('/tablero')
+}
+
+export async function borrarConsulta(id: string) {
+  await db().deleteConsulta(id)
+  revalidatePath('/'); revalidatePath('/tablero')
+  redirect('/tablero')
 }

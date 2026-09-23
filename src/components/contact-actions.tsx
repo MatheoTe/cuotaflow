@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ETAPAS, ETAPA_LABEL, type Etapa } from '@/lib/negocio'
-import { cambiarEtapa, enviarAgradecimiento, enviarRecordatorio, guardarCuota } from '@/app/actions'
+import { borrarContacto, cambiarEtapa, enviarAgradecimiento, enviarRecordatorio, guardarCuota } from '@/app/actions'
+import { BotonBorrar } from '@/components/boton-borrar'
 import type { Contact } from '@/lib/types'
 
 export function ContactActions({ c }: { c: Contact }) {
@@ -52,6 +53,8 @@ export function ContactActions({ c }: { c: Contact }) {
         </div>
         {aviso && <p className="mt-2 text-label-md text-on-surface-variant">{aviso}</p>}
       </div>
+
+      <BotonBorrar label="Borrar contacto y conversación" onConfirm={() => borrarContacto(c.id)} />
     </div>
   )
 }

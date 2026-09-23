@@ -30,6 +30,9 @@ export interface Store {
   getConsultaActiva(vendedorId: string): Promise<Consulta | null>
   createConsulta(vendedorId: string): Promise<Consulta>
   updateConsulta(id: string, patch: Partial<Omit<Consulta, 'id' | 'vendedor_id' | 'created_at'>>): Promise<Consulta>
+  /** Borra el contacto con su conversación, fotos y consultas. */
+  deleteContact(id: string): Promise<void>
+  deleteConsulta(id: string): Promise<void>
   reset(): Promise<void>
 }
 
@@ -161,6 +164,19 @@ class FileStore implements Store {
     await this.save()
     return d.consultas[i]
   }
+  async deleteContact(id: string) {
+    const d = await this.load()
+    d.contacts = d.contacts.filter(c => c.id !== id)
+    d.messages = d.messages.filter(m => m.contact_id !== id)
+    d.media = d.media.filter(m => m.contact_id !== id)
+    d.consultas = d.consultas.filter(c => c.vendedor_id !== id)
+    await this.save()
+  }
+  async deleteConsulta(id: string) {
+    const d = await this.load()
+    d.consultas = d.consultas.filter(c => c.id !== id)
+    await this.save()
+  }
   async reset() { this.cache = vacio(); await this.save() }
 }
 
@@ -238,6 +254,15 @@ class SupabaseStore implements Store {
     const { data, error } = await this.sb.from('consultas').update({ ...patch, updated_at: now() }).eq('id', id).select('*').single()
     if (error) throw error
     return data as Consulta
+  }
+  async deleteContact(id: string) {
+    // messages, media y consultas caen en cascada por la FK
+    const { error } = await this.sb.from('contacts').delete().eq('id', id)
+    if (error) throw error
+  }
+  async deleteConsulta(id: string) {
+    const { error } = await this.sb.from('consultas').delete().eq('id', id)
+    if (error) throw error
   }
   async reset() {
     const todo = '00000000-0000-0000-0000-000000000000'

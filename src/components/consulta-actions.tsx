@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { ETAPAS, ETAPA_LABEL, type Etapa } from '@/lib/negocio'
-import { cambiarEtapaConsulta, avisarVendedor } from '@/app/actions'
+import { borrarConsulta, cambiarEtapaConsulta, avisarVendedor } from '@/app/actions'
+import { BotonBorrar } from '@/components/boton-borrar'
 import type { Consulta } from '@/lib/types'
 
 export function ConsultaActions({ c }: { c: Consulta }) {
@@ -38,6 +39,8 @@ export function ConsultaActions({ c }: { c: Consulta }) {
         </div>
         {aviso && <p className="mt-2 text-label-md text-on-surface-variant">{aviso}</p>}
       </div>
+
+      <BotonBorrar label="Borrar consulta" onConfirm={() => borrarConsulta(c.id)} />
     </div>
   )
 }
