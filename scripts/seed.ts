@@ -49,12 +49,12 @@ const SEMILLAS: Semilla[] = [
   },
 ]
 
-/** Vendedor de La Quiaca con dos consultas ya procesadas. */
+/** Vendedor de la sucursal Norte con dos consultas ya procesadas. */
 async function sembrarVendedor(store: ReturnType<typeof db>) {
   const v = VENDEDORES[0]
   if (await store.getContactByPhone(v.phone)) { console.log('ya existe', v.nombre); return }
   const c = await store.createContact(v.phone, v.nombre, 'vendedor', v.sucursal)
-  await store.updateContact(c.id, { stage: 'seguimiento', resumen: 'Vendedor de La Quiaca. Manda consultas de clientes por acá en vez de por mail.', proximo_paso: 'Nada pendiente' })
+  await store.updateContact(c.id, { stage: 'seguimiento', resumen: 'Vendedor de la sucursal Norte. Manda consultas de clientes por acá en vez de por mail.', proximo_paso: 'Nada pendiente' })
 
   const consultas: Array<{ nombre: string; dni: string; banco: string; monto: number | null; hilo: Array<['in' | 'out', string]> }> = [
     { nombre: 'Mamani, Rosa', dni: '11222333', banco: 'Banco Nación', monto: 400000, hilo: [

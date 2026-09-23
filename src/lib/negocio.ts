@@ -33,8 +33,8 @@ export const NEGOCIO = {
  * mandar una consulta: el agente lo reconoce por el contenido y lo marca como vendedor.
  */
 export const VENDEDORES: Array<{ phone: string; nombre: string; sucursal: string }> = [
-  { phone: '5493885000001', nombre: 'Ramiro Quispe', sucursal: 'La Quiaca' },
-  { phone: '5491155550002', nombre: 'Matías Ledesma', sucursal: 'Tilcara' },
+  { phone: '5493885000001', nombre: 'Ramiro Paz', sucursal: 'Sucursal Norte' },
+  { phone: '5491155550002', nombre: 'Matías Ledesma', sucursal: 'Sucursal Centro' },
 ]
 
 export const ETAPAS = ['nuevo', 'verificacion', 'cobranza', 'seguimiento', 'rechazado'] as const
