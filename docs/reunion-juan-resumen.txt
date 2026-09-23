@@ -1,0 +1,53 @@
+*REUNIÓN JUAN · COMARFIN MUTUAL*
+
+*ORDEN (30 min)*
+1. Demo 10 min, antes de hablar de nada
+2. Sus 3 preguntas
+3. Meta: alcance
+4. Cierre: Meta arranca ya, fecha para el agente
+
+*DEMO (demo-creditos.vercel.app)*
+• Simulador → Soy vendedor
+• "Te paso una consulta. Gutierrez Pablo, DNI 40123456, quiere 500 mil" → pide el banco
+• "cobra en el Galicia" → califica y pre-aprueba. Mostrar dashboard
+• "el tel es 11 6655 4433" → cae en la misma consulta
+• Clip + foto DNI ficticio + "cobra por el Santander" → lee nombre y DNI de la foto
+• "otra: Choque Daniel dni 30111222 Macro 900 mil" → situación 3, queda a revisar
+• Formulario /consulta: "si prefieren, es el mismo motor"
+Remate: "el vendedor manda lo mismo que hoy, por WhatsApp. El sistema carga, califica y le contesta ahí. Vos ves todo en el tablero."
+
+*SUS PREGUNTAS*
+• Líneas: los números son de ustedes, se compran donde quieran. No hay sistemas que "generen" números legítimos, esos son los que Meta banea. Cada línea la doy de alta yo y el CRM atiende todas. 3, 4 o 5 líneas no cambian el precio del agente.
+• Consulta por WhatsApp y respuesta por el mismo medio: es lo que vio. Sin mail.
+• Fotos: entran por WhatsApp, quedan en la consulta, la IA las lee.
+
+*META*
+• Verificar = demostrar que la mutual existe: razón social, CUIT, domicilio, constancia de inscripción
+• Por qué se bloquean hoy: número sin verificar + difusiones a gente que no escribió = spam para Meta. No es mala suerte
+• Le pido: acceso admin al Meta Business (o uno nuevo limpio), CUIT y constancia, qué números y a nombre de quién, contacto para apelaciones
+• El mensual cubre: monitoreo, plantillas aprobadas, botón de baja, altas de líneas, portafolio de reserva, apelación y migración si restringen. Es un seguro
+• Límites a adelantar: número nuevo arranca con 250 conversaciones iniciadas por día y sube con calidad. Responder no tiene límite. Pasadas 24 h sin respuesta, solo plantilla. Meta cobra centavos por conversación que inicia la empresa
+
+*SI PREGUNTA*
+• Bureau simulado. En producción va BCRA/Veraz o el que usen
+• Las reglas de score las define él, son código, no IA
+• Datos inventados, incluido el DNI de la foto
+• El número de prueba solo responde a 5 celulares cargados
+
+*PRECIOS (propuestas 10/09)*
+• Meta: USD 250 setup + 100/mes
+• Agente + CRM propio: USD 1.595 setup + 340/mes
+
+*PARA CERRAR ALCANCE*
+• Cuántos vendedores y cuántas consultas por día
+• Qué chequean hoy al recibir una consulta
+• Qué pasa después de aprobar: quién llama, quién desembolsa
+• ¿Solo vendedores o también clientes finales a la línea?
+• Quién mira el tablero todos los días
+
+*ANTES DE ENTRAR*
+☐ Tablero limpio
+☐ Mandar "hola" al +1 555 139 0227 y ver que responde
+☐ Cargar el celular de Juan como destinatario
+☐ Pestañas: dashboard, simulador, formulario
+☐ Foto del DNI ficticio a mano
