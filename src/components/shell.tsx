@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, KanbanSquare, LayoutDashboard, MessagesSquare, Search, Smartphone, Sparkles } from 'lucide-react'
+import { Bell, FilePlus2, KanbanSquare, LayoutDashboard, MessagesSquare, Search, Smartphone, Sparkles } from 'lucide-react'
 import { NEGOCIO } from '@/lib/negocio'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +10,7 @@ const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/tablero', label: 'Pipeline', icon: KanbanSquare },
   { href: '/conversaciones', label: 'Conversaciones', icon: MessagesSquare },
+  { href: '/consulta', label: 'Nueva consulta', icon: FilePlus2 },
   { href: '/simulador', label: 'Simulador', icon: Smartphone },
 ]
 
@@ -20,6 +21,7 @@ const TITULOS: Array<[RegExp, string]> = [
   [/^\/simulador/, 'Simulador de WhatsApp'],
   [/^\/contactos/, 'Ficha del contacto'],
   [/^\/consultas/, 'Consulta de vendedor'],
+  [/^\/consulta$/, 'Nueva consulta'],
 ]
 
 export function Shell({ children }: { children: React.ReactNode }) {
