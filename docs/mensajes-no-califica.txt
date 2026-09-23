@@ -1,0 +1,35 @@
+*MENSAJES "NO CALIFICA"*
+
+*Como vendedor* (situación 5, deuda en gestión judicial → No califica)
+te paso otra: Ramírez Hugo, DNI 27314825, cobra en Banco Macro, quiere 700 mil
+
+*Como vendedor* (situación 4, riesgo alto → No califica)
+consulta: Acosta Silvia, DNI 22535806, Banco Provincia, 300 mil
+
+*Como cliente final* (sin ingresos demostrables → No califica)
+ahora escribo como cliente: hola, quiero un préstamo de 2 millones
+
+Tomás
+
+para un viaje
+
+no tengo trabajo ahora, cobro un plan
+
+como 250 mil
+
+19
+
+que tasa tienen?
+
+*Como cliente* (cuota que no entra en el ingreso → A revisar)
+ahora escribo como cliente: necesito 3 millones
+
+Lucas
+
+para un auto
+
+trabajo en blanco
+
+cobro 500 mil
+
+30
