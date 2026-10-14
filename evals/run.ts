@@ -19,7 +19,7 @@ import { evaluarRespuesta } from './rubrica'
 const args = process.argv.slice(2)
 const live = args.includes('--live')
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null
-const umbral = Number(process.env.EVAL_MIN_PASS_RATE ?? (live ? 0.8 : 1))
+const umbral = Number(process.env.EVAL_MIN_PASS_RATE || (live ? 0.8 : 1))
 
 if (live && !process.env.ANTHROPIC_API_KEY) {
   console.error('--live necesita ANTHROPIC_API_KEY. Sin la clave, corré `npm run evals` (offline).')

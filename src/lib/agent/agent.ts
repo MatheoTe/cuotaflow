@@ -7,7 +7,7 @@ import { ETAPAS } from '../negocio'
 import type { Contact, Message, Datos, Consulta, Media } from '../types'
 
 /** Modelo por defecto; se puede cambiar sin tocar código con CLAUDE_MODEL. */
-export const MODEL = process.env.CLAUDE_MODEL ?? 'claude-opus-5-5'
+export const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-5-5'
 /** Cuántas fotos recientes se le muestran al modelo. */
 const MAX_FOTOS = 4
 

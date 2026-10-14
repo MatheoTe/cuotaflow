@@ -139,7 +139,7 @@ describe('modeloClaude (SDK adapter)', () => {
   })
 
   it('defaults to the current Opus model', () => {
-    expect(MODEL).toBe(process.env.CLAUDE_MODEL ?? 'claude-opus-5-5')
+    expect(MODEL).toBe(process.env.CLAUDE_MODEL || 'claude-opus-5-5')
   })
 
   it('maps a missing parsed_output to null', async () => {
