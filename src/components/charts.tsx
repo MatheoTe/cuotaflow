@@ -52,17 +52,19 @@ export function Donut({ parts, size = 168, thickness = 22, center }: { parts: Do
   const r = (size - thickness) / 2
   const c = 2 * Math.PI * r
   const gapPx = 2
-  let offset = 0
+  // Offset acumulado de cada arco, calculado antes del render (sin mutar durante el map).
+  const arcos = parts.filter(p => p.value > 0).reduce<Array<{ part: DonutPart; len: number; offset: number }>>((acc, part) => {
+    const prev = acc[acc.length - 1]
+    const offset = prev ? prev.offset + prev.len : 0
+    return [...acc, { part, len: (part.value / Math.max(1, total)) * c, offset }]
+  }, [])
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block" role="img" aria-label={parts.map(p => `${p.label}: ${p.value}`).join(', ')}>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(220 30% 100% / 0.05)" strokeWidth={thickness} />
       <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-        {parts.filter(p => p.value > 0).map(p => {
-          const len = (p.value / Math.max(1, total)) * c
+        {arcos.map(({ part: p, len, offset }) => {
           const dash = Math.max(0, len - gapPx)
-          const el = <circle key={p.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={p.color} strokeWidth={thickness} strokeDasharray={`${dash} ${c - dash}`} strokeDashoffset={-offset - gapPx / 2} />
-          offset += len
-          return el
+          return <circle key={p.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={p.color} strokeWidth={thickness} strokeDasharray={`${dash} ${c - dash}`} strokeDashoffset={-offset - gapPx / 2} />
         })}
       </g>
       {center && (

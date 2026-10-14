@@ -32,15 +32,26 @@ export default function Simulador() {
   const bottom = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const cargar = useCallback(async (p: string) => {
-    const r = await fetch(`/api/chat?phone=${encodeURIComponent(p)}`)
-    const j = await r.json()
+  const aplicar = useCallback((j: { messages?: Message[]; contact?: Contact | null; consulta?: Consulta | null }) => {
     setMessages(j.messages ?? [])
     setContact(j.contact ?? null)
     setConsulta(j.consulta ?? null)
   }, [])
 
-  useEffect(() => { cargar(phone) }, [phone, cargar])
+  const cargar = useCallback(async (p: string) => {
+    const r = await fetch(`/api/chat?phone=${encodeURIComponent(p)}`)
+    aplicar(await r.json())
+  }, [aplicar])
+
+  useEffect(() => {
+    // Al cambiar de teléfono se recarga el hilo; si cambia de nuevo antes de que llegue, se descarta.
+    let vigente = true
+    fetch(`/api/chat?phone=${encodeURIComponent(phone)}`)
+      .then(r => r.json())
+      .then(j => { if (vigente) aplicar(j) })
+      .catch(() => undefined)
+    return () => { vigente = false }
+  }, [phone, aplicar])
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   function elegirFoto(e: React.ChangeEvent<HTMLInputElement>) {
