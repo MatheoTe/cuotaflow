@@ -1,5 +1,8 @@
 # WhatsApp credit agent + CRM
 
+[![Live demo](https://img.shields.io/badge/Live_demo-whatsapp--credit--agent.vercel.app-000?logo=vercel&logoColor=white)](https://whatsapp-credit-agent.vercel.app)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MatheoTe/whatsapp-credit-agent)
+
 [![CI](https://github.com/MatheoTe/whatsapp-credit-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheoTe/whatsapp-credit-agent/actions/workflows/ci.yml)
 
 A WhatsApp AI agent with its own CRM for a consumer-lending business. Leads and
@@ -20,6 +23,33 @@ Built with Next.js 16 (App Router, React 19), TypeScript (strict), Supabase
 (Postgres), the Anthropic SDK (Claude Opus 5.5, structured outputs + vision),
 the WhatsApp Cloud API, Tailwind and zod. Tested with Vitest, evaluated with an
 offline/live golden set, checked in CI.
+
+## Live demo
+
+**[whatsapp-credit-agent.vercel.app](https://whatsapp-credit-agent.vercel.app)**, or
+run the same thing in your browser with
+[GitHub Codespaces](https://codespaces.new/MatheoTe/whatsapp-credit-agent)
+(no secrets needed). Both run in **demo mode** (`DEMO_MODE=1`):
+
+- **No keys, no spend.** The agent answers with an offline, deterministic model
+  that plugs into the same `Modelo` boundary the evals use
+  (`src/lib/agent/modelo-demo.ts`). Claude is never called, even if a key is
+  set; everything around the model (merge, guardrails, scoring, simulated
+  bureau, pipeline) is the production code. It handles the demo script in
+  `docs/mensajes-demo.txt` (including "reading" the fictional ID card in
+  `public/demo/dni-ficticio.png`) and asks again when it does not understand.
+  To see the real model, run locally with an `ANTHROPIC_API_KEY`.
+- **Fictional data in memory.** The store is seeded at startup with the same
+  fictional seed as `npm run seed` (leads, a seller with scored requests, one
+  read from the ID photo, and the collections portfolio). It resets on every
+  cold start and nightly through a Vercel cron that calls the token-protected
+  `/api/demo/reset`.
+- **WhatsApp off.** The webhook returns 404 and nothing is ever sent to Meta.
+- **Abuse guard.** The simulator has a per-IP rate limit and a message length cap.
+
+Try `/simulador`: "Soy vendedor" and paste
+`Hola Sofi, te paso una consulta. Cliente Gutierrez Pablo, DNI 40123456, quiere 500 mil`,
+or "Soy cliente" and start with `hola, necesito plata`.
 
 ## Screenshots
 
@@ -156,6 +186,8 @@ npm run seed:cobranzas          # fictional collections portfolio
 npm run dev                     # http://localhost:3000
 ```
 
+No API key? `DEMO_MODE=1 npm run dev` runs the demo mode described above.
+
 Without Supabase, data lives in `data/store.json`. Open `/simulador` to chat
 with the agent as a lead or as a seller (a fictional ID card to attach is at
 `public/demo/dni-ficticio.png`).
@@ -178,7 +210,7 @@ outside the 24-hour customer window only approved templates can be sent.
 ## Tests and evals
 
 ```bash
-npm test                 # Vitest: 142 tests, no network
+npm test                 # Vitest: 172 tests, no network
 npm run test:coverage    # coverage report for src/lib
 npm run evals            # golden set, offline (recorded model outputs)
 npm run evals:live       # same conversations against Claude (reads .env.local, spends tokens)
