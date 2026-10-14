@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "evals": "tsx evals/run.ts",
-    "evals:live": "tsx evals/run.ts --live",
+    "evals:live": "tsx --env-file-if-exists=.env.local evals/run.ts --live",
     "seed": "tsx scripts/seed.ts",
     "seed:cobranzas": "tsx scripts/seed-cobranzas.ts"
   },
