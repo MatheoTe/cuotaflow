@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const tareas: Array<() => Promise<void>> = []
 vi.mock('next/server', async importOriginal => ({
@@ -56,6 +56,12 @@ describe('GET (Meta verification handshake)', () => {
 })
 
 describe('POST (incoming messages)', () => {
+  // Without a secret the route skips signature checks; tests that need one set it explicitly.
+  // Clearing it here keeps the suite independent of the environment (CI defines a dummy secret).
+  beforeEach(() => {
+    vi.stubEnv('WHATSAPP_APP_SECRET', '')
+  })
+
   it('with an app secret configured, rejects unsigned or badly signed requests', async () => {
     vi.stubEnv('WHATSAPP_APP_SECRET', 'app-secret')
     expect((await post(cuerpo())).status).toBe(401)
