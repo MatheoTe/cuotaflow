@@ -13,7 +13,8 @@ export function calcularScore(d: Datos): { score: number; razones: string[]; com
   if (!d.nombre) faltan.push('nombre')
   if (!d.monto_solicitado) faltan.push('monto')
   if (!d.situacion_laboral || d.situacion_laboral === 'desconocida') faltan.push('situación laboral')
-  if (!d.ingresos_mensuales) faltan.push('ingresos')
+  // 0 es una respuesta válida ("no gano nada"): solo falta si nunca se dijo.
+  if (d.ingresos_mensuales == null) faltan.push('ingresos')
   if (!d.edad) faltan.push('edad')
   const completo = faltan.length === 0
   if (!completo) razones.push(`Faltan datos: ${faltan.join(', ')}`)
