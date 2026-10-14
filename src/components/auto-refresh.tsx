@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-/** Refresca la página cada N segundos: en la demo, el tablero se mueve solo mientras Juan chatea. */
+/** Refresca la página cada N segundos: en la demo, el tablero se mueve solo mientras alguien chatea. */
 export function AutoRefresh({ seconds = 5 }: { seconds?: number }) {
   const router = useRouter()
   useEffect(() => {

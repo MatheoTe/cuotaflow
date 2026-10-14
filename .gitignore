@@ -1,12 +1,25 @@
+# dependencies
 node_modules
+
+# build output
 .next
-.env
-.env.local
-.env*.local
-data/store.json
-.vercel
+out
+build
+coverage
 *.tsbuildinfo
 next-env.d.ts
+
+# local data (JSON fallback store used when Supabase is not configured)
+data/
+
+# environment: never commit real values; only the documented template
 .env*
-.env.supabase.local
-.env.supabase.keys.local
+!.env.example
+
+# platform / CLI state
+.vercel
+supabase/.temp
+.DS_Store
+
+# private notes (client meetings, never published)
+private/

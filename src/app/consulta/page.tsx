@@ -73,7 +73,7 @@ export default function ConsultaForm() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2 mb-1 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Vendedor</div>
           <div><Label htmlFor="vn">Nombre</Label><Input id="vn" value={form.vendedor_nombre} onChange={set('vendedor_nombre')} className="mt-1 bg-black/20" /></div>
-          <div><Label htmlFor="vp">Tu WhatsApp</Label><Input id="vp" value={form.vendedor_phone} onChange={set('vendedor_phone')} inputMode="numeric" placeholder="5491155551234" className="mt-1 bg-black/20" /></div>
+          <div><Label htmlFor="vp">Tu WhatsApp</Label><Input id="vp" value={form.vendedor_phone} onChange={set('vendedor_phone')} inputMode="numeric" placeholder="5491100001234" className="mt-1 bg-black/20" /></div>
 
           <div className="sm:col-span-2 mb-1 mt-2 text-label-sm uppercase tracking-[0.14em] text-on-surface-variant">Cliente</div>
           <div><Label htmlFor="nc">Apellido y nombre</Label><Input id="nc" value={form.nombre_cliente} onChange={set('nombre_cliente')} placeholder="Pérez, Juan" className="mt-1 bg-black/20" /></div>

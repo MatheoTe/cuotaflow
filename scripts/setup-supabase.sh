@@ -16,7 +16,7 @@ NAME="demo-creditos"
 REGION="${REGION:-sa-east-1}"
 
 if [ -z "${PROJECT_REF:-}" ]; then
-  ORG_ID="${ORG_ID:-$(supabase orgs list -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const o=JSON.parse(s);console.log((o.find(x=>/personal|matheo/i.test(x.name))||o[0]).id)})')}"
+  ORG_ID="${ORG_ID:-$(supabase orgs list -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const o=JSON.parse(s);console.log(o[0].id)})')}"
   DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 24 | tr -d '/+=' | cut -c1-24)}"
   echo "→ creando proyecto $NAME en la org $ORG_ID ($REGION)"
   supabase projects create "$NAME" --org-id "$ORG_ID" --db-password "$DB_PASSWORD" --region "$REGION" -o json > /tmp/sb-project.json
@@ -70,4 +70,4 @@ PASO="deploy"
 echo "→ desplegando"
 vercel --prod --yes
 
-echo "Listo. Tablero: https://demo-creditos.vercel.app/tablero"
+echo "Listo. Tablero: <tu-deploy>/tablero"

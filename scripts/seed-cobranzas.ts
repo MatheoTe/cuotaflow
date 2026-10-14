@@ -48,8 +48,8 @@ const cuentas: NuevaCuenta[] = S.map((s, i) => {
   return {
     nombre: s.nombre,
     dni: String(28_100_000 + i * 731_457).replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-    telefono: `54911500${String(3000 + i).padStart(5, '0')}`.slice(0, 13),
-    nro_credito: `CM-${String(24100 + i * 37)}`,
+    telefono: `54911000${String(3000 + i).padStart(5, '0')}`.slice(0, 13),
+    nro_credito: `MH-${String(24100 + i * 37)}`,
     producto: s.cuota > 100000 ? 'Préstamo personal' : i % 3 === 0 ? 'Adelanto de sueldo' : 'Préstamo personal',
     cuota: s.cuota,
     cuotas_pagas: s.pagas,

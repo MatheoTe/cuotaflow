@@ -1,8 +1,8 @@
-# Demo · Agente de WhatsApp + CRM propio para Comarfin Mutual
+# Demo · Agente de WhatsApp + CRM propio para Mutual Horizonte
 
 Demo para mostrar un agente conversacional que atiende por WhatsApp a dos
 públicos y deja todo en un CRM propio con embudos de verificación, cobranza y
-seguimiento. Negocio ficticio: **Comarfin Mutual**.
+seguimiento. Negocio ficticio: **Mutual Horizonte**.
 
 - **Vendedores** (el caso principal): en vez de mandar la consulta por mail,
   el vendedor le escribe a la línea con nombre, DNI y banco donde cobra el

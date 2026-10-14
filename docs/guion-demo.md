@@ -1,8 +1,8 @@
-# Guion de la demo para Juan
+# Guion de la demo
 
-Duración: 10 minutos. Todo corre en https://demo-creditos.vercel.app.
+Duración: 10 minutos. Todo corre en el deploy de la demo (o en `npm run dev`).
 Abrí dos pestañas: **/tablero** y **/simulador**. Si ya hay número de Meta,
-en vez del simulador que Juan escriba desde su celular a la línea de prueba.
+en vez del simulador se puede escribir desde un celular a la línea de prueba.
 
 ## 1. El caso de él: un vendedor pasa una consulta (4 min)
 
@@ -13,7 +13,7 @@ En el simulador, botón **Soy vendedor**.
 2. `cobra en el Galicia`
    → el sistema califica (situación 1) y contesta pre-aprobado hasta 1,5 M.
    Mostrá el **tablero**: la consulta apareció en Verificación con el score.
-3. `el tel es 11 6655 4433`
+3. `el tel es 11 0000 4433`
    → lo carga en la misma consulta, no abre otra.
 4. Clip → adjuntá `public/demo/dni-ficticio.png` con el texto `te paso esta, cobra por el Santander`
    → lee nombre y DNI de la foto. Abrí la consulta en el tablero: foto adjunta, datos, razones del score.

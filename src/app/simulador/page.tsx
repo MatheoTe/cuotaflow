@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Meter } from '@/components/charts'
 import type { Consulta, Contact, Message } from '@/lib/types'
 
-const CLIENTE_DEMO = '5491155550001'
+const CLIENTE_DEMO = '5491100000201'
 const VENDEDOR_DEMO = VENDEDORES[1]
 
 /**

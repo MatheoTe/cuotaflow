@@ -4,7 +4,7 @@
  * para adaptar la demo a otro rubro sin tocar el código.
  */
 export const NEGOCIO = {
-  nombre: 'Comarfin Mutual',
+  nombre: 'Mutual Horizonte',
   agente: 'Sofi',
   horario: 'lunes a viernes de 9 a 18 h',
   productos: [
@@ -23,8 +23,8 @@ export const NEGOCIO = {
   tasas: 'La tasa depende del perfil y del plazo; te la confirma el verificador en la llamada, con el costo total y la cuota exacta.',
   cobranza: {
     nombre: 'Sector de cobranza',
-    cbu: 'alias COMARFIN.PAGOS',
-    medios: 'transferencia al alias COMARFIN.PAGOS, Mercado Pago o Rapipago con el número de cliente',
+    cbu: 'alias HORIZONTE.PAGOS',
+    medios: 'transferencia al alias HORIZONTE.PAGOS, Mercado Pago o Rapipago con el número de cliente',
   },
 } as const
 
@@ -33,8 +33,8 @@ export const NEGOCIO = {
  * mandar una consulta: el agente lo reconoce por el contenido y lo marca como vendedor.
  */
 export const VENDEDORES: Array<{ phone: string; nombre: string; sucursal: string }> = [
-  { phone: '5493885000001', nombre: 'Ramiro Paz', sucursal: 'Sucursal Norte' },
-  { phone: '5491155550002', nombre: 'Matías Ledesma', sucursal: 'Sucursal Centro' },
+  { phone: '5493880000001', nombre: 'Ramiro Paz', sucursal: 'Sucursal Norte' },
+  { phone: '5491100000202', nombre: 'Matías Ledesma', sucursal: 'Sucursal Centro' },
 ]
 
 export const ETAPAS = ['nuevo', 'verificacion', 'cobranza', 'seguimiento', 'rechazado'] as const
