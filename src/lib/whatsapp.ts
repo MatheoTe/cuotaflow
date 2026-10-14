@@ -1,3 +1,6 @@
+import { createHmac, timingSafeEqual } from 'crypto'
+import { z } from 'zod'
+
 /**
  * Cliente mínimo de la WhatsApp Cloud API (Graph API v21).
  * Con el número de prueba de Meta alcanza para la demo: manda texto libre a los
@@ -79,27 +82,64 @@ export async function descargarMedia(mediaId: string): Promise<{ mime: string; d
   return { mime: mime_type, data: buf.toString('base64') }
 }
 
-/** Forma del webhook de Meta, solo lo que usamos. */
-export interface WebhookPayload {
-  object?: string
-  entry?: Array<{
-    changes?: Array<{
-      value?: {
-        contacts?: Array<{ wa_id: string; profile?: { name?: string } }>
-        messages?: Array<{
-          id: string
-          from: string
-          timestamp: string
-          type: string
-          text?: { body: string }
-          button?: { text: string }
-          interactive?: { button_reply?: { title: string }; list_reply?: { title: string } }
-          image?: { id: string; mime_type: string; caption?: string }
-          document?: { id: string; mime_type: string; caption?: string; filename?: string }
-        }>
-      }
-    }>
-  }>
+/* ───────────────────────── Webhook entrante ───────────────────────── */
+
+/**
+ * Forma del webhook de Meta, solo lo que usamos. Se valida con zod: un payload
+ * que no respeta la forma se descarta entero en vez de romper más adelante.
+ * Las claves desconocidas se ignoran (Meta agrega campos sin avisar).
+ */
+const MensajeWebhook = z.object({
+  id: z.string().min(1),
+  from: z.string().regex(/^\d{6,20}$/),
+  timestamp: z.string(),
+  type: z.string(),
+  text: z.object({ body: z.string() }).optional(),
+  button: z.object({ text: z.string() }).optional(),
+  interactive: z.object({
+    button_reply: z.object({ title: z.string() }).optional(),
+    list_reply: z.object({ title: z.string() }).optional(),
+  }).optional(),
+  image: z.object({ id: z.string(), mime_type: z.string(), caption: z.string().optional() }).optional(),
+  document: z.object({ id: z.string(), mime_type: z.string(), caption: z.string().optional(), filename: z.string().optional() }).optional(),
+})
+
+export const WebhookSchema = z.object({
+  object: z.string().optional(),
+  entry: z.array(z.object({
+    changes: z.array(z.object({
+      value: z.object({
+        contacts: z.array(z.object({ wa_id: z.string(), profile: z.object({ name: z.string().optional() }).optional() })).optional(),
+        messages: z.array(MensajeWebhook).optional(),
+      }).optional(),
+    })).optional(),
+  })).optional(),
+})
+
+export type WebhookPayload = z.infer<typeof WebhookSchema>
+
+/**
+ * Verifica la cabecera X-Hub-Signature-256: HMAC-SHA256 del cuerpo crudo con el
+ * App Secret de la app de Meta. Comparación en tiempo constante.
+ */
+export function firmaValida(cuerpo: string, cabecera: string | null, appSecret: string): boolean {
+  if (!cabecera?.startsWith('sha256=')) return false
+  const esperada = createHmac('sha256', appSecret).update(cuerpo, 'utf8').digest()
+  let recibida: Buffer
+  try {
+    recibida = Buffer.from(cabecera.slice('sha256='.length), 'hex')
+  } catch {
+    return false
+  }
+  return recibida.length === esperada.length && timingSafeEqual(recibida, esperada)
+}
+
+/** Igualdad de secretos en tiempo constante (para el verify token del GET). */
+export function mismoSecreto(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false
+  const ba = Buffer.from(a)
+  const bb = Buffer.from(b)
+  return ba.length === bb.length && timingSafeEqual(ba, bb)
 }
 
 export interface Entrante { waId: string; from: string; name: string | null; text: string; mediaId: string | null; mime: string | null }
