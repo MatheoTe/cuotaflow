@@ -2,14 +2,16 @@ import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { z } from 'zod'
 import { SYSTEM_PROMPT, estadoContacto } from './prompt'
+import { aplicarGuardas } from './guardas'
 import { ETAPAS } from '../negocio'
 import type { Contact, Message, Datos, Consulta, Media } from '../types'
 
-const MODEL = process.env.CLAUDE_MODEL ?? 'claude-opus-5'
+/** Modelo por defecto; se puede cambiar sin tocar código con CLAUDE_MODEL. */
+export const MODEL = process.env.CLAUDE_MODEL ?? 'claude-opus-5-5'
 /** Cuántas fotos recientes se le muestran al modelo. */
 const MAX_FOTOS = 4
 
-const Salida = z.object({
+export const Salida = z.object({
   reply: z.string().describe('Texto exacto que se manda por WhatsApp. Corto, una pregunta como máximo.'),
   rol: z.enum(['cliente', 'vendedor']),
   datos: z.object({
@@ -38,9 +40,6 @@ const Salida = z.object({
 
 export type SalidaAgente = z.infer<typeof Salida>
 
-let client: Anthropic | null = null
-const anthropic = () => (client ??= new Anthropic())
-
 type MediaMime = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
 const esImagen = (mime: string): mime is MediaMime => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mime)
 
@@ -54,15 +53,42 @@ export interface ContextoAgente {
   nota?: string
 }
 
+/** Lo que se le pide al modelo: el prompt fijo y el hilo armado. */
+export interface SolicitudModelo { system: string; messages: Anthropic.MessageParam[] }
+/** Respuesta mínima que el agente necesita del modelo. */
+export interface RespuestaModelo { stop_reason: string | null; parsed_output: SalidaAgente | null }
 /**
- * Genera la respuesta del agente para el último mensaje entrante.
- * `history` es el hilo completo, ordenado, incluido el mensaje nuevo.
+ * Frontera con el LLM. En producción es Claude; en tests y evals se reemplaza
+ * por un doble que devuelve salidas grabadas, sin red ni costo.
  */
-export async function responder(ctx: ContextoAgente): Promise<SalidaAgente> {
+export type Modelo = (req: SolicitudModelo) => Promise<RespuestaModelo>
+
+let client: Anthropic | null = null
+const anthropic = () => (client ??= new Anthropic())
+
+/** Implementación real: salida estructurada validada contra el esquema zod. */
+export const modeloClaude: Modelo = async ({ system, messages }) => {
+  const response = await anthropic().messages.parse({
+    model: MODEL,
+    max_tokens: 4000,
+    output_config: { effort: 'medium', format: zodOutputFormat(Salida) },
+    system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+    messages,
+  })
+  return { stop_reason: response.stop_reason, parsed_output: response.parsed_output ?? null }
+}
+
+/**
+ * Arma el hilo para el modelo: une turnos consecutivos del mismo rol, adjunta
+ * solo las últimas fotos como imagen y deja el estado volátil al final del
+ * último turno del usuario, para que el prefijo (system + historial) se cachee.
+ */
+export function construirMensajes(ctx: ContextoAgente, ahora: Date = new Date()): Anthropic.MessageParam[] {
   const { contact, history, consulta, media } = ctx
   const messages: Anthropic.MessageParam[] = []
-  // Solo las últimas fotos viajan como imagen; las anteriores quedan como texto.
-  const idsFotos = history.filter(m => m.media_id && media.get(m.media_id) && esImagen(media.get(m.media_id)!.mime)).map(m => m.media_id!)
+  const idsFotos = history
+    .filter(m => m.media_id && media.get(m.media_id) && esImagen(media.get(m.media_id)!.mime))
+    .map(m => m.media_id!)
   const fotosVisibles = new Set(idsFotos.slice(-MAX_FOTOS))
 
   for (const m of history) {
@@ -84,42 +110,59 @@ export async function responder(ctx: ContextoAgente): Promise<SalidaAgente> {
   if (messages.length === 0 || messages[0].role !== 'user') {
     messages.unshift({ role: 'user', content: [{ type: 'text', text: '(inicio de conversación)' }] })
   }
-  // El estado volátil va al final, en el turno del usuario, así el prefijo se cachea.
-  const estado = [estadoContacto(contact, consulta, new Date()), ctx.nota].filter(Boolean).join('\n\n')
+  const estado = [estadoContacto(contact, consulta, ahora), ctx.nota].filter(Boolean).join('\n\n')
   const last = messages[messages.length - 1]
   if (last.role === 'user' && Array.isArray(last.content)) {
     last.content.push({ type: 'text', text: estado })
   } else {
     messages.push({ role: 'user', content: [{ type: 'text', text: estado }] })
   }
+  return messages
+}
 
-  const response = await anthropic().messages.parse({
-    model: MODEL,
-    max_tokens: 4000,
-    output_config: { effort: 'medium', format: zodOutputFormat(Salida) },
-    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages,
-  })
+/** Respuesta segura cuando el modelo se niega o no devuelve una salida válida: no toca la ficha. */
+export function salidaDeRespaldo(contact: Contact): SalidaAgente {
+  return {
+    reply: 'Perdón, no pude procesar ese mensaje. ¿Me lo repetís con otras palabras?',
+    rol: contact.tipo,
+    datos: normalizar(contact.datos),
+    consulta: null,
+    stage: contact.stage,
+    resumen: contact.resumen ?? 'Sin resumen',
+    proximo_paso: contact.proximo_paso ?? 'Revisar conversación',
+  }
+}
 
-  if (response.stop_reason === 'refusal' || !response.parsed_output) {
-    return {
-      reply: 'Perdón, no pude procesar ese mensaje. ¿Me lo repetís con otras palabras?',
-      rol: contact.tipo,
-      datos: normalizar(contact.datos),
-      consulta: null,
-      stage: contact.stage,
-      resumen: contact.resumen ?? 'Sin resumen',
-      proximo_paso: contact.proximo_paso ?? 'Revisar conversación',
+/**
+ * Combina la salida del modelo con lo que ya se sabía del contacto:
+ * null en la salida significa "no cambió", nunca "borrar". DNI y teléfono quedan en dígitos.
+ */
+export function fusionarSalida(out: SalidaAgente, contact: Contact): SalidaAgente {
+  const fusionada: SalidaAgente = {
+    ...out,
+    datos: { ...normalizar(contact.datos), ...sinNulos(out.datos) } as SalidaAgente['datos'],
+  }
+  if (out.consulta) {
+    fusionada.consulta = {
+      ...out.consulta,
+      dni: out.consulta.dni?.replace(/\D/g, '') || null,
+      telefono_cliente: out.consulta.telefono_cliente?.replace(/\D/g, '') || null,
     }
   }
-  const out = response.parsed_output
-  // Los datos nuevos nunca borran los viejos: null en la salida = "no cambió".
-  out.datos = { ...normalizar(contact.datos), ...sinNulos(out.datos) } as SalidaAgente['datos']
-  if (out.consulta) {
-    out.consulta.dni = out.consulta.dni?.replace(/\D/g, '') || null
-    out.consulta.telefono_cliente = out.consulta.telefono_cliente?.replace(/\D/g, '') || null
-  }
-  return out
+  return fusionada
+}
+
+/**
+ * Genera la respuesta del agente para el último mensaje entrante.
+ * `history` es el hilo completo, ordenado, incluido el mensaje nuevo.
+ * El modelo propone; `fusionarSalida` y `aplicarGuardas` deciden qué se guarda.
+ */
+export async function responder(ctx: ContextoAgente, modelo: Modelo = modeloClaude): Promise<SalidaAgente> {
+  const response = await modelo({ system: SYSTEM_PROMPT, messages: construirMensajes(ctx) })
+  if (response.stop_reason === 'refusal' || !response.parsed_output) return salidaDeRespaldo(ctx.contact)
+  const { salida, correcciones } = aplicarGuardas(fusionarSalida(response.parsed_output, ctx.contact))
+  if (correcciones.length) console.warn('[agente] guardas aplicadas:', correcciones.join('; '))
+  return salida
 }
 
 function normalizar(d: Datos): SalidaAgente['datos'] {

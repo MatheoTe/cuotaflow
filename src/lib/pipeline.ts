@@ -1,5 +1,5 @@
-import { db } from './db'
-import { responder } from './agent/agent'
+import { db, type Store } from './db'
+import { responder as responderConClaude, type ContextoAgente, type SalidaAgente } from './agent/agent'
 import { notaResultado } from './agent/prompt'
 import { calcularScore, calcularScoreConsulta, consultarBureau, etapaPorScore, montoSugerido, formatoARS } from './scoring'
 import { ETAPA_LABEL, VENDEDORES } from './negocio'
@@ -16,13 +16,22 @@ export interface Entrada {
 
 export interface Resultado { contact: Contact; reply: Message; consulta: Consulta | null }
 
+/** Colaboradores externos del pipeline. Se inyectan en tests y evals. */
+export interface Dependencias {
+  store: Store
+  responder: (ctx: ContextoAgente) => Promise<SalidaAgente>
+  bureau: typeof consultarBureau
+}
+
 /**
  * Camino único para todo mensaje entrante, venga de WhatsApp o del simulador:
  * guarda el mensaje (y la foto), corre el agente, actualiza la ficha o la
  * consulta, y guarda la respuesta. El envío por WhatsApp lo hace quien llama.
  */
-export async function procesarEntrante(input: Entrada): Promise<Resultado> {
-  const store = db()
+export async function procesarEntrante(input: Entrada, deps: Partial<Dependencias> = {}): Promise<Resultado> {
+  const store = deps.store ?? db()
+  const responder = deps.responder ?? ((ctx: ContextoAgente) => responderConClaude(ctx))
+  const bureau = deps.bureau ?? consultarBureau
   const vendedorConocido = VENDEDORES.find(v => v.phone === input.phone)
   let contact = await store.getContactByPhone(input.phone)
   if (!contact) {
@@ -73,7 +82,7 @@ export async function procesarEntrante(input: Entrada): Promise<Resultado> {
     const reciénCompleta = calcularScoreConsulta(parcial).completa && !consulta.bureau
     if (reciénCompleta) {
       // Califica el sistema, no la IA. Después el agente redacta el resultado.
-      parcial.bureau = consultarBureau(parcial.dni!)
+      parcial.bureau = bureau(parcial.dni!)
       const { score } = calcularScoreConsulta(parcial)
       Object.assign(patch, { bureau: parcial.bureau, score, completa: true, stage: etapaPorScore(score) })
       consulta = await store.updateConsulta(consulta.id, patch)
