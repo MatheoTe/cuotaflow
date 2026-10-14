@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { procesarEntrante } from '@/lib/pipeline'
 import { db } from '@/lib/db'
+import { guardiaDemo } from '@/lib/guardia-demo'
 
 export const runtime = 'nodejs'
 
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
   const imagen = body?.imagen && /^image\/(jpeg|png|gif|webp)$/.test(body.imagen.mime) ? body.imagen : null
   if (!phone || (!text && !imagen)) return NextResponse.json({ error: 'phone y text (o una foto) son obligatorios' }, { status: 400 })
   if (imagen && imagen.data.length * 0.75 > MAX_IMAGEN_BYTES) return NextResponse.json({ error: 'La foto supera los 4 MB' }, { status: 413 })
+  const rechazo = guardiaDemo(req, { texto: text, imagenBase64: imagen?.data })
+  if (rechazo) return rechazo
   try {
     const { contact, reply, consulta } = await procesarEntrante({ phone, text, name: body?.name ?? null, imagen })
     return NextResponse.json({ reply: reply.body, contact, consulta })

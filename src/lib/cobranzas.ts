@@ -4,6 +4,8 @@ import path from 'path'
 import { randomUUID } from 'crypto'
 
 import { OPERADORES, type Cuenta } from './cobranzas-base'
+import { esDemo } from './demo'
+import { cuentasDemo } from './seed/cobranzas'
 export * from './cobranzas-base'
 
 export type NuevaCuenta = Omit<Cuenta, 'id' | 'created_at' | 'updated_at'> & { created_at?: string; updated_at?: string }
@@ -19,15 +21,9 @@ export interface CobranzasStore {
 const now = () => new Date().toISOString()
 const orden = (a: Cuenta, b: Cuenta) => b.dias_mora - a.dias_mora || b.saldo_vencido - a.saldo_vencido
 
-class FileCobranzas implements CobranzasStore {
-  private file = process.env.VERCEL ? '/tmp/demo-creditos-cobranzas.json' : path.join(process.cwd(), 'data', 'cobranzas.json')
-  private async load(): Promise<Cuenta[]> {
-    try { return JSON.parse(await fs.readFile(this.file, 'utf8')) as Cuenta[] } catch { return [] }
-  }
-  private async save(d: Cuenta[]) {
-    await fs.mkdir(path.dirname(this.file), { recursive: true })
-    await fs.writeFile(this.file, JSON.stringify(d, null, 2))
-  }
+abstract class JsonCobranzas implements CobranzasStore {
+  protected abstract load(): Promise<Cuenta[]>
+  protected abstract save(d: Cuenta[]): Promise<void>
   async list() { return (await this.load()).sort(orden) }
   async get(id: string) { return (await this.load()).find(c => c.id === id) ?? null }
   async update(id: string, patch: Partial<Cuenta>) {
@@ -44,6 +40,35 @@ class FileCobranzas implements CobranzasStore {
     await this.save(d)
   }
   async reset() { await this.save([]) }
+}
+
+class FileCobranzas extends JsonCobranzas {
+  private file = process.env.VERCEL ? '/tmp/demo-creditos-cobranzas.json' : path.join(process.cwd(), 'data', 'cobranzas.json')
+  protected async load(): Promise<Cuenta[]> {
+    try { return JSON.parse(await fs.readFile(this.file, 'utf8')) as Cuenta[] } catch { return [] }
+  }
+  protected async save(d: Cuenta[]) {
+    await fs.mkdir(path.dirname(this.file), { recursive: true })
+    await fs.writeFile(this.file, JSON.stringify(d, null, 2))
+  }
+}
+
+/** Cartera en memoria. En modo demo se siembra sola antes del primer acceso. */
+export class MemoryCobranzas extends JsonCobranzas {
+  private data: Cuenta[] = []
+  private listo: Promise<void> | null = null
+  constructor(private semilla?: () => NuevaCuenta[]) { super() }
+  protected async load() {
+    if (this.semilla) await (this.listo ??= this.resembrar())
+    return this.data
+  }
+  protected async save(d: Cuenta[]) { this.data = d }
+  async resembrar() {
+    const tmp = new MemoryCobranzas()
+    if (this.semilla) await tmp.insertMany(this.semilla())
+    this.data = tmp.data
+    this.listo = Promise.resolve()
+  }
 }
 
 class SupabaseCobranzas implements CobranzasStore {
@@ -73,7 +98,14 @@ class SupabaseCobranzas implements CobranzasStore {
 }
 
 let store: CobranzasStore | null = null
+const global = globalThis as typeof globalThis & { __demoCobranzas?: MemoryCobranzas }
+
+export function demoCobranzas(): MemoryCobranzas {
+  return (global.__demoCobranzas ??= new MemoryCobranzas(() => cuentasDemo()))
+}
+
 export function cobranzas(): CobranzasStore {
+  if (esDemo()) return demoCobranzas()
   if (store) return store
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY

@@ -4,6 +4,9 @@ import path from 'path'
 import { randomUUID } from 'crypto'
 import type { Contact, Message, Datos, Direction, MessageKind, Media, Consulta, TipoContacto } from './types'
 import type { Etapa } from './negocio'
+import { esDemo } from './demo'
+import { sembrarOriginacion } from './seed/originacion'
+import { leerDniFicticio } from './seed/dni-ficticio'
 
 /**
  * Capa de datos con dos implementaciones:
@@ -170,11 +173,35 @@ abstract class JsonStore implements Store {
   async reset() { await this.save(vacio()) }
 }
 
-/** Store en memoria: sin I/O, aislado por instancia. Lo usan los tests y los evals. */
+/**
+ * Store en memoria: sin I/O, aislado por instancia. Lo usan los tests, los evals
+ * y el modo demo. Con `semilla`, se carga solo antes del primer acceso.
+ */
 export class MemoryStore extends JsonStore {
   private data = vacio()
-  protected async load() { return this.data }
+  private listo: Promise<void> | null = null
+  constructor(private semilla?: (s: Store) => Promise<void>) { super() }
+
+  protected async load() {
+    if (this.semilla) await (this.listo ??= this.sembrar())
+    return this.data
+  }
   protected async save(d: FileData) { this.data = d }
+
+  /** Siembra en un store aparte y recién ahí reemplaza: nadie ve la carga a medias. */
+  private async sembrar() {
+    const nuevo = new MemoryStore()
+    await this.semilla!(nuevo)
+    this.data = nuevo.data
+  }
+
+  /** Vuelve al estado de la semilla (o a vacío si no tiene). */
+  async resembrar() {
+    if (!this.semilla) { this.data = vacio(); return }
+    const pendiente = this.sembrar()
+    this.listo = pendiente
+    await pendiente
+  }
 }
 
 class FileStore extends JsonStore {
@@ -292,7 +319,18 @@ class SupabaseStore implements Store {
 
 let store: Store | null = null
 
+/**
+ * En modo demo el store vive en globalThis: Next puede cargar este módulo más
+ * de una vez en el mismo proceso (instrumentation, rutas, recarga en dev).
+ */
+const global = globalThis as typeof globalThis & { __demoStore?: MemoryStore }
+
+export function demoStore(): MemoryStore {
+  return (global.__demoStore ??= new MemoryStore(s => sembrarOriginacion(s, { fotoDni: leerDniFicticio() })))
+}
+
 export function db(): Store {
+  if (esDemo()) return demoStore()
   if (store) return store
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -302,7 +340,8 @@ export function db(): Store {
   return store
 }
 
-export function storeKind(): 'supabase' | 'archivo' {
+export function storeKind(): 'supabase' | 'archivo' | 'demo en memoria' {
+  if (esDemo()) return 'demo en memoria'
   return process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY ? 'supabase' : 'archivo'
 }
 

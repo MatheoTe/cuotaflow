@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { SYSTEM_PROMPT, estadoContacto } from './prompt'
 import { aplicarGuardas } from './guardas'
 import { ETAPAS } from '../negocio'
+import { esDemo } from '../demo'
+import { crearModeloDemo } from './modelo-demo'
 import type { Contact, Message, Datos, Consulta, Media } from '../types'
 
 /** Modelo por defecto; se puede cambiar sin tocar código con CLAUDE_MODEL. */
@@ -68,6 +70,8 @@ const anthropic = () => (client ??= new Anthropic())
 
 /** Implementación real: salida estructurada validada contra el esquema zod. */
 export const modeloClaude: Modelo = async ({ system, messages }) => {
+  // La demo pública no gasta: aunque haya una clave configurada, Claude no se llama.
+  if (esDemo()) throw new Error('DEMO_MODE activo: el modelo real está deshabilitado')
   const response = await anthropic().messages.parse({
     model: MODEL,
     max_tokens: 4000,
@@ -156,8 +160,10 @@ export function fusionarSalida(out: SalidaAgente, contact: Contact): SalidaAgent
  * Genera la respuesta del agente para el último mensaje entrante.
  * `history` es el hilo completo, ordenado, incluido el mensaje nuevo.
  * El modelo propone; `fusionarSalida` y `aplicarGuardas` deciden qué se guarda.
+ * Sin modelo explícito usa Claude, o el modelo offline si DEMO_MODE está activo.
  */
-export async function responder(ctx: ContextoAgente, modelo: Modelo = modeloClaude): Promise<SalidaAgente> {
+export async function responder(ctx: ContextoAgente, modelo?: Modelo): Promise<SalidaAgente> {
+  modelo ??= esDemo() ? crearModeloDemo(ctx) : modeloClaude
   const response = await modelo({ system: SYSTEM_PROMPT, messages: construirMensajes(ctx) })
   if (response.stop_reason === 'refusal' || !response.parsed_output) return salidaDeRespaldo(ctx.contact)
   const { salida, correcciones } = aplicarGuardas(fusionarSalida(response.parsed_output, ctx.contact))

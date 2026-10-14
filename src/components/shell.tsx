@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, FilePlus2, KanbanSquare, LayoutDashboard, MessagesSquare, Search, Smartphone, Sparkles } from 'lucide-react'
+import { Bell, ExternalLink, FilePlus2, KanbanSquare, LayoutDashboard, MessagesSquare, Search, Smartphone, Sparkles } from 'lucide-react'
 import { NEGOCIO } from '@/lib/negocio'
 import { cn } from '@/lib/utils'
 
@@ -25,7 +25,21 @@ const TITULOS: Array<[RegExp, string]> = [
   [/^\/consulta$/, 'Nueva consulta'],
 ]
 
-export function Shell({ children }: { children: React.ReactNode }) {
+/** Franja del modo demo público: discreta, una línea, con el link al repo. */
+function BannerDemo({ repo }: { repo: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2 border-b border-white/10 bg-primary/10 px-4 py-1.5 text-center text-label-md text-on-surface-variant">
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" aria-hidden />
+      <span>Live demo · fictional data · resets nightly</span>
+      <span aria-hidden className="text-on-surface-variant/40">·</span>
+      <a href={repo} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
+        Source on GitHub <ExternalLink className="h-3 w-3" aria-hidden />
+      </a>
+    </div>
+  )
+}
+
+export function Shell({ children, demo = null }: { children: React.ReactNode; demo?: { repo: string } | null }) {
   const path = usePathname()
   const titulo = TITULOS.find(([re]) => re.test(path))?.[1] ?? 'CRM'
   return (
@@ -64,6 +78,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {demo && <BannerDemo repo={demo.repo} />}
         <header className="glass sticky top-0 z-20 flex items-center gap-4 rounded-none border-x-0 border-t-0 px-4 py-3 md:px-6">
           <div className="min-w-0">
             <div className="font-display text-title-md font-semibold md:text-title-lg">{titulo}</div>

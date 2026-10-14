@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { z } from 'zod'
+import { esDemo } from './demo'
 
 /**
  * Cliente mínimo de la WhatsApp Cloud API (Graph API v21).
@@ -8,7 +9,9 @@ import { z } from 'zod'
  */
 const GRAPH = 'https://graph.facebook.com/v21.0'
 
+/** En modo demo nunca: aunque haya credenciales, la demo pública no manda nada a Meta. */
 export function whatsappConfigurado(): boolean {
+  if (esDemo()) return false
   return Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID)
 }
 
@@ -28,6 +31,7 @@ function variantesArgentina(to: string): string[] {
 }
 
 export async function enviarTexto(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
+  if (esDemo()) return { ok: false, error: 'Demo pública: los envíos por WhatsApp están deshabilitados' }
   if (!whatsappConfigurado()) return { ok: false, error: 'WhatsApp no configurado (falta WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID)' }
   let r = await enviarTextoA(to, body)
   if (!r.ok && r.error?.includes('131030')) {

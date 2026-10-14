@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { procesarEntrante } from '@/lib/pipeline'
 import { enviarTexto, whatsappConfigurado } from '@/lib/whatsapp'
 import { VENDEDORES } from '@/lib/negocio'
+import { guardiaDemo } from '@/lib/guardia-demo'
 
 export const runtime = 'nodejs'
 
@@ -35,6 +36,8 @@ export async function POST(req: Request) {
   if (partes.length === 0 && !imagen) return NextResponse.json({ error: 'Cargá al menos un dato o la foto del DNI' }, { status: 400 })
 
   const text = `Te paso una consulta nueva por el formulario.\n${partes.join('\n')}${imagen ? '\n(Adjunto la foto del DNI.)' : ''}`
+  const rechazo = guardiaDemo(req, { texto: partes.join('\n'), imagenBase64: imagen?.data })
+  if (rechazo) return rechazo
   try {
     const { contact, reply, consulta } = await procesarEntrante({ phone: vendedorPhone, text, name: vendedorNombre, imagen })
     let envio = 'WhatsApp no configurado: la respuesta quedó en el hilo.'

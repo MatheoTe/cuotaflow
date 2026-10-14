@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server'
 import { after } from 'next/server'
 import { db } from '@/lib/db'
 import { procesarEntrante } from '@/lib/pipeline'
+import { esDemo } from '@/lib/demo'
 import { descargarMedia, enviarTexto, extraerEntrantes, firmaValida, marcarLeido, mismoSecreto, WebhookSchema } from '@/lib/whatsapp'
 
 export const runtime = 'nodejs'
 
+/** La demo pública no tiene línea de WhatsApp: el webhook no existe. */
+const apagadoEnDemo = () => NextResponse.json({ error: 'not found' }, { status: 404 })
+
 /** Verificación del webhook (Meta la hace una vez al configurarlo). */
 export async function GET(req: Request) {
+  if (esDemo()) return apagadoEnDemo()
   const url = new URL(req.url)
   const mode = url.searchParams.get('hub.mode')
   const token = url.searchParams.get('hub.verify_token')
@@ -28,6 +33,7 @@ let avisoSinFirma = false
 
 /** Mensajes entrantes. Respondemos 200 enseguida y procesamos después. */
 export async function POST(req: Request) {
+  if (esDemo()) return apagadoEnDemo()
   const cuerpo = await req.text()
 
   const appSecret = process.env.WHATSAPP_APP_SECRET
