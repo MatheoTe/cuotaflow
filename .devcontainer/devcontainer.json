@@ -1,0 +1,22 @@
+{
+  // Runs the app in demo mode with zero secrets: offline agent model, fictional
+  // data seeded in memory at server start, WhatsApp disabled.
+  "name": "whatsapp-credit-agent (demo mode)",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "containerEnv": {
+    "DEMO_MODE": "1",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "postCreateCommand": "npm ci",
+  // The dev server seeds the in-memory store when it boots (src/instrumentation.ts);
+  // the warm-up request makes sure the seed is loaded before the browser opens.
+  "postStartCommand": "nohup bash -c 'npm run dev -- --hostname 0.0.0.0 > /tmp/next-dev.log 2>&1' >/dev/null 2>&1 & (for i in $(seq 1 60); do curl -fsS -o /dev/null http://localhost:3000/ && break; sleep 2; done) || true",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "CRM + simulator (demo mode)", "onAutoForward": "openPreview" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] },
+    "vscode": { "extensions": ["dbaeumer.vscode-eslint", "bradlc.vscode-tailwindcss"] }
+  }
+}
