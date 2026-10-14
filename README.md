@@ -23,19 +23,28 @@ offline/live golden set, checked in CI.
 
 ## Screenshots
 
-_Placeholders. Capture at 1440×900 after `npm run seed && npm run seed:cobranzas`
-and save them under `docs/screenshots/`._
+Fictional seed data (`npm run seed && npm run seed:cobranzas`); the UI is in Spanish.
 
-| Screen | Route | What to show |
-|---|---|---|
-| Dashboard | `/` | KPIs, pipeline donut, recent requests, requests per day |
-| Origination board | `/tablero` | Kanban (New · Verification · Collections · Follow-up · Rejected) with scores |
-| Collections funnel | `/tablero` (pipeline selector → Cobranzas) | Delinquency stages and the per-operator performance table |
-| Simulator | `/simulador` | Phone mock-up chatting as a seller, live lead card next to it |
-| Seller request | `/consultas/[id]` | Extracted data, bureau result, score reasons, attached ID photo |
-| Lead record | `/contactos/[id]` | Full thread, extracted fields, system score and reasons, campaign buttons |
-| Debtor record | `/cobranzas/[id]` | Debt status and collection history |
-| Web form | `/consulta` | The same engine fed from a form instead of WhatsApp |
+![Dashboard: KPIs, pipeline donut, recent seller requests and requests per day](docs/screenshots/dashboard.jpg)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/origination-board.jpg" width="100%" alt="Origination board"><br><sub><b>Origination board.</b> New, verification, collections, follow-up and rejected, each case with its score.</sub></td>
+    <td width="50%"><img src="docs/screenshots/collections-funnel.jpg" width="100%" alt="Collections funnel"><br><sub><b>Collections funnel.</b> Delinquency stages and the per-operator performance table.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/simulator.jpg" width="100%" alt="WhatsApp simulator"><br><sub><b>Simulator.</b> A live conversation with the agent; the lead card fills in and gets scored as it goes.</sub></td>
+    <td width="50%"><img src="docs/screenshots/seller-request.jpg" width="100%" alt="Seller request"><br><sub><b>Seller request.</b> Data read from the ID photo, bureau result, score reasons and the seller thread.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/lead-record.jpg" width="100%" alt="Lead record"><br><sub><b>Lead record.</b> Full thread, extracted fields, system score with reasons and campaign buttons.</sub></td>
+    <td width="50%"><img src="docs/screenshots/debtor-record.jpg" width="100%" alt="Debtor record"><br><sub><b>Debtor record.</b> Debt status, collection history and the WhatsApp debt notice.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/web-form.jpg" width="100%" alt="Web form"><br><sub><b>Web form.</b> The same engine fed from a form instead of WhatsApp.</sub></td>
+    <td width="50%"></td>
+  </tr>
+</table>
 
 ## Architecture
 
