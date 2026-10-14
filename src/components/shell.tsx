@@ -30,7 +30,7 @@ function BannerDemo({ repo }: { repo: string }) {
   return (
     <div className="flex items-center justify-center gap-2 border-b border-white/10 bg-primary/10 px-4 py-1.5 text-center text-label-md text-on-surface-variant">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" aria-hidden />
-      <span>Live demo · fictional data · resets nightly</span>
+      <span>Cuotaflow live demo · fictional data · resets nightly</span>
       <span aria-hidden className="text-on-surface-variant/40">·</span>
       <a href={repo} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
         Source on GitHub <ExternalLink className="h-3 w-3" aria-hidden />
@@ -51,7 +51,7 @@ export function Shell({ children, demo = null }: { children: React.ReactNode; de
           </span>
           <span>
             <span className="block font-display text-title-md font-semibold leading-tight">{NEGOCIO.nombre}</span>
-            <span className="block text-label-sm uppercase tracking-[0.18em] text-on-surface-variant">CRM · Agente IA</span>
+            <span className="block text-label-sm uppercase tracking-[0.18em] text-on-surface-variant">Cuotaflow · Agente IA</span>
           </span>
         </Link>
         <nav className="flex flex-col gap-1">

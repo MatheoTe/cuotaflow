@@ -1,7 +1,7 @@
 {
   // Runs the app in demo mode with zero secrets: offline agent model, fictional
   // data seeded in memory at server start, WhatsApp disabled.
-  "name": "whatsapp-credit-agent (demo mode)",
+  "name": "Cuotaflow (demo mode)",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "containerEnv": {
     "DEMO_MODE": "1",

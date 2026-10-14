@@ -9,8 +9,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const sora = Sora({ subsets: ['latin'], variable: '--font-display', weight: ['500', '600', '700'] })
 
 export const metadata: Metadata = {
-  title: `${NEGOCIO.nombre} · CRM`,
-  description: 'Demo de agente de WhatsApp con CRM propio',
+  title: `${NEGOCIO.nombre} · Cuotaflow`,
+  description: 'Cuotaflow: agente de crédito con IA en WhatsApp que califica solicitantes y gestiona la cobranza, con CRM propio',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

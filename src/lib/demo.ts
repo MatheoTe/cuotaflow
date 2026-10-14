@@ -9,7 +9,7 @@ export function esDemo(): boolean {
   return v === '1' || v === 'true'
 }
 
-export const REPO_URL = 'https://github.com/MatheoTe/whatsapp-credit-agent'
+export const REPO_URL = 'https://github.com/MatheoTe/cuotaflow'
 
 /** Topes del simulador público. */
 export const LIMITES_DEMO = {

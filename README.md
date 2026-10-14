@@ -1,11 +1,14 @@
-# WhatsApp credit agent + CRM
+# Cuotaflow
 
-[![Live demo](https://img.shields.io/badge/Live_demo-whatsapp--credit--agent.vercel.app-000?logo=vercel&logoColor=white)](https://whatsapp-credit-agent.vercel.app)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MatheoTe/whatsapp-credit-agent)
+**Cuotaflow — AI credit agent on WhatsApp.** It qualifies loan applicants and runs
+collections, with its own CRM for the operators.
 
-[![CI](https://github.com/MatheoTe/whatsapp-credit-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheoTe/whatsapp-credit-agent/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/Live_demo-cuotaflow.vercel.app-000?logo=vercel&logoColor=white)](https://cuotaflow.vercel.app)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MatheoTe/cuotaflow)
 
-A WhatsApp AI agent with its own CRM for a consumer-lending business. Leads and
+[![CI](https://github.com/MatheoTe/cuotaflow/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheoTe/cuotaflow/actions/workflows/ci.yml)
+
+Cuotaflow is a WhatsApp AI agent with its own CRM for a consumer-lending business. Leads and
 field sellers write to one WhatsApp line; Claude holds the conversation and
 extracts structured data (including reading a photo of an ID card), while
 deterministic code scores the applicant, queries a (simulated) credit bureau
@@ -26,9 +29,9 @@ offline/live golden set, checked in CI.
 
 ## Live demo
 
-**[whatsapp-credit-agent.vercel.app](https://whatsapp-credit-agent.vercel.app)**, or
+**[cuotaflow.vercel.app](https://cuotaflow.vercel.app)**, or
 run the same thing in your browser with
-[GitHub Codespaces](https://codespaces.new/MatheoTe/whatsapp-credit-agent)
+[GitHub Codespaces](https://codespaces.new/MatheoTe/cuotaflow)
 (no secrets needed). Both run in **demo mode** (`DEMO_MODE=1`):
 
 - **No keys, no spend.** The agent answers with an offline, deterministic model

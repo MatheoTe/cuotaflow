@@ -43,7 +43,7 @@ abstract class JsonCobranzas implements CobranzasStore {
 }
 
 class FileCobranzas extends JsonCobranzas {
-  private file = process.env.VERCEL ? '/tmp/demo-creditos-cobranzas.json' : path.join(process.cwd(), 'data', 'cobranzas.json')
+  private file = process.env.VERCEL ? '/tmp/cuotaflow-cobranzas.json' : path.join(process.cwd(), 'data', 'cobranzas.json')
   protected async load(): Promise<Cuenta[]> {
     try { return JSON.parse(await fs.readFile(this.file, 'utf8')) as Cuenta[] } catch { return [] }
   }

@@ -206,7 +206,7 @@ export class MemoryStore extends JsonStore {
 
 class FileStore extends JsonStore {
   // En Vercel el filesystem del proyecto es de solo lectura: se usa /tmp (efímero). Para la demo real va Supabase.
-  private file = process.env.VERCEL ? '/tmp/demo-creditos-store.json' : path.join(process.cwd(), 'data', 'store.json')
+  private file = process.env.VERCEL ? '/tmp/cuotaflow-store.json' : path.join(process.cwd(), 'data', 'store.json')
 
   /** Se relee siempre: el seed y el servidor son procesos distintos sobre el mismo archivo. */
   protected async load(): Promise<FileData> {

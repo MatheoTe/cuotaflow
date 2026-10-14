@@ -12,7 +12,7 @@ if [ -f .env.supabase.local ]; then set -a; . ./.env.supabase.local; set +a; fi
 trap 'echo "✗ falló en el paso: $PASO (línea $LINENO)"' ERR
 PASO="inicio"
 
-NAME="demo-creditos"
+NAME="cuotaflow"
 REGION="${REGION:-sa-east-1}"
 
 if [ -z "${PROJECT_REF:-}" ]; then
