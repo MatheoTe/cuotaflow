@@ -19,7 +19,7 @@ throughout: **the model talks and extracts, the code decides.**
 
 > **Nota:** la interfaz del producto y las conversaciones del agente están en
 > español rioplatense: el mercado objetivo es Argentina. El negocio
-> ("Mutual Horizonte"), las personas, los teléfonos y los DNI de la demo son
+> ("Mutual Tero Azul"), las personas, los teléfonos y los DNI de la demo son
 > ficticios.
 
 Built with Next.js 16 (App Router, React 19), TypeScript (strict), Supabase

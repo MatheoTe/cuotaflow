@@ -4,7 +4,7 @@
  * para adaptar la demo a otro rubro sin tocar el código.
  */
 export const NEGOCIO = {
-  nombre: 'Mutual Horizonte',
+  nombre: 'Mutual Tero Azul',
   agente: 'Sofi',
   horario: 'lunes a viernes de 9 a 18 h',
   productos: [
@@ -23,8 +23,8 @@ export const NEGOCIO = {
   tasas: 'La tasa depende del perfil y del plazo; te la confirma el verificador en la llamada, con el costo total y la cuota exacta.',
   cobranza: {
     nombre: 'Sector de cobranza',
-    cbu: 'alias HORIZONTE.PAGOS',
-    medios: 'transferencia al alias HORIZONTE.PAGOS, Mercado Pago o Rapipago con el número de cliente',
+    cbu: 'alias TEROAZUL.PAGOS',
+    medios: 'transferencia al alias TEROAZUL.PAGOS, Mercado Pago o Rapipago con el número de cliente',
   },
 } as const
 

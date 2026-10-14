@@ -88,7 +88,7 @@ describe('demo model: the script in docs/mensajes-demo.txt', () => {
     enGuion(lineas)
     const { ultimo, replies } = await conversar(new MemoryStore(), '5491100000301', lineas)
     expect(ultimo.contact.stage).toBe('cobranza')
-    expect(replies[1]).toMatch(/HORIZONTE\.PAGOS/)
+    expect(replies[1]).toMatch(/TEROAZUL\.PAGOS/)
   })
 
   it('a seller who switches to writing as a client starts a fresh client thread', async () => {
