@@ -1,6 +1,6 @@
 # WhatsApp credit agent + CRM
 
-[![CI](https://github.com/MatheoTe/demo-creditos/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheoTe/demo-creditos/actions/workflows/ci.yml)
+[![CI](https://github.com/MatheoTe/whatsapp-credit-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheoTe/whatsapp-credit-agent/actions/workflows/ci.yml)
 
 A WhatsApp AI agent with its own CRM for a consumer-lending business. Leads and
 field sellers write to one WhatsApp line; Claude holds the conversation and
