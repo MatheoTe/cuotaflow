@@ -75,29 +75,18 @@ const emptyConsulta = (vendedorId: string): Consulta => ({
   updated_at: now(),
 })
 
-/* ───────────────────────── JSON local ───────────────────────── */
+/* ──────────────────── JSON (memoria o archivo) ──────────────────── */
 
 interface FileData { contacts: Contact[]; messages: Message[]; media: Media[]; consultas: Consulta[] }
 const vacio = (): FileData => ({ contacts: [], messages: [], media: [], consultas: [] })
 
-class FileStore implements Store {
-  // En Vercel el filesystem del proyecto es de solo lectura: se usa /tmp (efímero). Para la demo real va Supabase.
-  private file = process.env.VERCEL ? '/tmp/demo-creditos-store.json' : path.join(process.cwd(), 'data', 'store.json')
-  private cache: FileData | null = null
-
-  /** Se relee siempre: el seed y el servidor son procesos distintos sobre el mismo archivo. */
-  private async load(): Promise<FileData> {
-    try {
-      this.cache = { ...vacio(), ...(JSON.parse(await fs.readFile(this.file, 'utf8')) as Partial<FileData>) }
-    } catch {
-      this.cache = vacio()
-    }
-    return this.cache
-  }
-  private async save() {
-    await fs.mkdir(path.dirname(this.file), { recursive: true })
-    await fs.writeFile(this.file, JSON.stringify(this.cache, null, 2))
-  }
+/**
+ * Implementación sobre un documento JSON. Las subclases solo deciden dónde vive
+ * el documento: en memoria (tests y evals) o en un archivo (desarrollo local).
+ */
+abstract class JsonStore implements Store {
+  protected abstract load(): Promise<FileData>
+  protected abstract save(d: FileData): Promise<void>
 
   async listContacts() {
     const d = await this.load()
@@ -109,7 +98,7 @@ class FileStore implements Store {
     const d = await this.load()
     const c = emptyContact(phone, name, tipo, sucursal)
     d.contacts.push(c)
-    await this.save()
+    await this.save(d)
     return c
   }
   async updateContact(id: string, patch: Partial<Contact>) {
@@ -117,7 +106,7 @@ class FileStore implements Store {
     const i = d.contacts.findIndex(c => c.id === id)
     if (i < 0) throw new Error(`contacto ${id} no existe`)
     d.contacts[i] = { ...d.contacts[i], ...patch, updated_at: now() }
-    await this.save()
+    await this.save(d)
     return d.contacts[i]
   }
   async listMessages(contactId: string) {
@@ -125,11 +114,12 @@ class FileStore implements Store {
   }
   async addMessage(input: NuevoMensaje) {
     const d = await this.load()
+    if (input.wa_id && d.messages.some(m => m.wa_id === input.wa_id)) throw new Error(`mensaje ${input.wa_id} duplicado`)
     const m: Message = { id: randomUUID(), kind: 'text', wa_id: null, media_id: null, created_at: now(), ...input }
     d.messages.push(m)
     const i = d.contacts.findIndex(c => c.id === input.contact_id)
     if (i >= 0) d.contacts[i] = { ...d.contacts[i], last_message_at: m.created_at }
-    await this.save()
+    await this.save(d)
     return m
   }
   async hasWaMessage(waId: string) { return (await this.load()).messages.some(m => m.wa_id === waId) }
@@ -137,7 +127,7 @@ class FileStore implements Store {
     const d = await this.load()
     const m: Media = { id: randomUUID(), created_at: now(), ...input }
     d.media.push(m)
-    await this.save()
+    await this.save(d)
     return m
   }
   async getMedia(id: string) { return (await this.load()).media.find(m => m.id === id) ?? null }
@@ -153,7 +143,7 @@ class FileStore implements Store {
     const d = await this.load()
     const c = emptyConsulta(vendedorId)
     d.consultas.push(c)
-    await this.save()
+    await this.save(d)
     return c
   }
   async updateConsulta(id: string, patch: Partial<Consulta>) {
@@ -161,7 +151,7 @@ class FileStore implements Store {
     const i = d.consultas.findIndex(c => c.id === id)
     if (i < 0) throw new Error(`consulta ${id} no existe`)
     d.consultas[i] = { ...d.consultas[i], ...patch, updated_at: now() }
-    await this.save()
+    await this.save(d)
     return d.consultas[i]
   }
   async deleteContact(id: string) {
@@ -170,14 +160,39 @@ class FileStore implements Store {
     d.messages = d.messages.filter(m => m.contact_id !== id)
     d.media = d.media.filter(m => m.contact_id !== id)
     d.consultas = d.consultas.filter(c => c.vendedor_id !== id)
-    await this.save()
+    await this.save(d)
   }
   async deleteConsulta(id: string) {
     const d = await this.load()
     d.consultas = d.consultas.filter(c => c.id !== id)
-    await this.save()
+    await this.save(d)
   }
-  async reset() { this.cache = vacio(); await this.save() }
+  async reset() { await this.save(vacio()) }
+}
+
+/** Store en memoria: sin I/O, aislado por instancia. Lo usan los tests y los evals. */
+export class MemoryStore extends JsonStore {
+  private data = vacio()
+  protected async load() { return this.data }
+  protected async save(d: FileData) { this.data = d }
+}
+
+class FileStore extends JsonStore {
+  // En Vercel el filesystem del proyecto es de solo lectura: se usa /tmp (efímero). Para la demo real va Supabase.
+  private file = process.env.VERCEL ? '/tmp/demo-creditos-store.json' : path.join(process.cwd(), 'data', 'store.json')
+
+  /** Se relee siempre: el seed y el servidor son procesos distintos sobre el mismo archivo. */
+  protected async load(): Promise<FileData> {
+    try {
+      return { ...vacio(), ...(JSON.parse(await fs.readFile(this.file, 'utf8')) as Partial<FileData>) }
+    } catch {
+      return vacio()
+    }
+  }
+  protected async save(d: FileData) {
+    await fs.mkdir(path.dirname(this.file), { recursive: true })
+    await fs.writeFile(this.file, JSON.stringify(d, null, 2))
+  }
 }
 
 /* ───────────────────────── Supabase ───────────────────────── */
